@@ -1,0 +1,10 @@
+CREATE TABLE [dbo].[AccessLogs] (
+    [Id] UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    [LogTime] DATETIME NOT NULL DEFAULT GETDATE(),
+    [UserId] UNIQUEIDENTIFIER NULL,
+    [ActionTaken] NVARCHAR(100) NOT NULL,
+    [MinioLogImage] NVARCHAR(255) NULL,
+    [DeviceImpacted] NVARCHAR(100) NULL,
+    CONSTRAINT [FK_AccessLogs_Users] FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users]([Id]) ON DELETE SET NULL
+);
+GO

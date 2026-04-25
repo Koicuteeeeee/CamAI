@@ -1,0 +1,6 @@
+@CamAI.Service.AI_HostAddress = http://localhost:5120
+
+GET {{CamAI.Service.AI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

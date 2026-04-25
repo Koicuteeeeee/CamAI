@@ -1,6 +1,28 @@
 # CamAI Git Ignore
-.env
+
+# [Infrastructure Data] - QUAN TRỌNG: KHÔNG ĐƯA DATA MINIO LÊN GIT
+infra_data/
+
+# [Dotnet]
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# [Project Specific]
+src/CamAI.Service.AI/Data/*.json
 *.log
-node_modules/
+
+# [Visual Studio & VS Code]
+.vs/
+.vscode/
+
+# [Configuration]
+appsettings.json
+appsettings.Development.json
+
+# [Operating System]
 .DS_Store
 Thumbs.db
+

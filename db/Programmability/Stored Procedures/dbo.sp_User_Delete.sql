@@ -1,0 +1,8 @@
+CREATE OR ALTER PROCEDURE [dbo].[sp_User_Delete]
+    @UserId UNIQUEIDENTIFIER
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [dbo].[Users] WHERE [Id] = @UserId;
+END
+GO
