@@ -1,0 +1,6 @@
+# CamAI Git Ignore
+.env
+*.log
+node_modules/
+.DS_Store
+Thumbs.db
