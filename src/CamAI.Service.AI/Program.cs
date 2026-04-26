@@ -43,8 +43,14 @@ builder.Services.AddSingleton<IFaceMatchService>(sp =>
     return new ApiFaceMatchService(client, logger);
 });
 
+// Thêm dịch vụ trung chuyển hình ảnh
+builder.Services.AddSingleton<StreamProvider>();
+
 // Thêm MinIO Storage Service
 builder.Services.AddSingleton<IMinioStorageService, MinioStorageService>();
+
+// Kích hoạt con mắt AI quét luồng stream
+builder.Services.AddHostedService<CameraService>();
 
 // CORS - cho phép Web App gọi API
 builder.Services.AddCors(options =>
@@ -89,4 +95,12 @@ app.Logger.LogInformation("  CamAI - AI Engine Service");
 app.Logger.LogInformation("  Models path: {Path}", modelsPath);
 app.Logger.LogInformation("===========================================");
 
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    app.Logger.LogCritical(ex, "APP CRASHED! Nguyen nhan: {Message}", ex.Message);
+    throw;
+}

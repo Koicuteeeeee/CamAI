@@ -1,6 +1,9 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using CamAI.Common.Interfaces;
 using CamAI.Common.Models;
+using CamAI.Service.AI.BLL.Models;
+using Microsoft.Extensions.Logging;
 
 namespace CamAI.Service.AI.Services;
 
@@ -13,6 +16,7 @@ public class ApiFaceMatchService : IFaceMatchService
     private readonly ILogger<ApiFaceMatchService> _logger;
     private Dictionary<Guid, RegisteredFace> _registeredFaces = new();
     private readonly object _lock = new();
+    private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public ApiFaceMatchService(HttpClient httpClient, ILogger<ApiFaceMatchService> logger)
     {
@@ -28,7 +32,7 @@ public class ApiFaceMatchService : IFaceMatchService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<ApiFaceResponse>("api/users/faces");
+            var response = await _httpClient.GetFromJsonAsync<ApiFaceResponse>("api/users/faces", _jsonOptions);
             if (response != null && response.Success && response.Data != null)
             {
                 lock (_lock)
@@ -44,12 +48,12 @@ public class ApiFaceMatchService : IFaceMatchService
                         };
                     }
                 }
-                _logger.LogInformation("Đã đồng bộ {Count} khuôn mặt từ API.", _registeredFaces.Count);
+                _logger.LogInformation("[MatchService] Da dong bo {Count} khuon mat tu API.", _registeredFaces.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi khi đồng bộ khuôn mặt từ API. Vui lòng kiểm tra CamAI.API đã chạy chưa.");
+            _logger.LogError(ex, "Loi khi dong bo khuon mat tu API. Vui long kiem tra CamAI.API da chay chua.");
         }
     }
 
@@ -92,7 +96,7 @@ public class ApiFaceMatchService : IFaceMatchService
             else
             {
                 result.Similarity = maxSim;
-                _logger.LogWarning("Phát hiện người lạ! Gần giống nhất: {Name}, Sim = {Sim:F3}, Threshold = {Thres}", bestName, maxSim, threshold);
+                // _logger.LogWarning("Phát hiện người lạ! Gần giống nhất: {Name}, Sim = {Sim:F3}", bestName, maxSim);
             }
         }
         return result;
@@ -100,7 +104,6 @@ public class ApiFaceMatchService : IFaceMatchService
 
     public void Register(RegisteredFace face)
     {
-        // Gửi lệnh đăng ký tới API
         try
         {
             var request = new
@@ -111,22 +114,18 @@ public class ApiFaceMatchService : IFaceMatchService
                 MinioObjectName = face.MinioObjectName
             };
 
-            var postTask = _httpClient.PostAsJsonAsync("api/users/register", request);
-            postTask.Wait(); // Chạy đồng bộ tạm thời vì Interface không trả về Task
+            var postTask = _httpClient.PostAsJsonAsync("api/users/register", request, _jsonOptions);
+            postTask.Wait(); 
 
             if (postTask.Result.IsSuccessStatusCode)
             {
-                _logger.LogInformation("Đã đăng ký thành công lên API: {Name}", face.FullName);
-                _ = SyncWithApiAsync(); // Đồng bộ lại sau khi đăng ký
-            }
-            else
-            {
-                _logger.LogError("Lỗi khi đăng ký lên API: {Status}", postTask.Result.StatusCode);
+                _logger.LogInformation("Da dang ky thanh cong len API: {Name}", face.FullName);
+                _ = SyncWithApiAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Không thể kết nối đến CamAI.API để đăng ký.");
+            _logger.LogError(ex, "Khong the ket noi den CamAI.API de dang ky.");
         }
     }
 
@@ -134,7 +133,6 @@ public class ApiFaceMatchService : IFaceMatchService
     {
         lock (_lock)
         {
-            _logger.LogInformation("GetAllRegistered called. Current dictionary size: {Count}", _registeredFaces.Count);
             return _registeredFaces.Values.ToList();
         }
     }
@@ -156,7 +154,7 @@ public class ApiFaceMatchService : IFaceMatchService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Không thể xóa User trên API.");
+            _logger.LogError(ex, "Khong the xoa User tren API.");
         }
         return false;
     }
@@ -173,19 +171,5 @@ public class ApiFaceMatchService : IFaceMatchService
         }
         float denominator = MathF.Sqrt(normA) * MathF.Sqrt(normB);
         return denominator > 0 ? dot / denominator : 0;
-    }
-
-    // === Class parse JSON ===
-    private class ApiFaceResponse
-    {
-        public bool Success { get; set; }
-        public List<ApiFaceRecord> Data { get; set; } = new();
-    }
-
-    private class ApiFaceRecord
-    {
-        public Guid UserId { get; set; }
-        public string FullName { get; set; } = "";
-        public float[] Embedding { get; set; } = Array.Empty<float>();
     }
 }

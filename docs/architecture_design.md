@@ -21,6 +21,11 @@ Hệ thống được thiết kế theo kiến trúc Microservices, tách biệt
     *   Thực hiện nhận diện khuôn mặt (Face Recognition) và cử chỉ thời gian thực.
     *   **Stateless Local:** Không lưu dữ liệu người dùng tại chỗ, tự động đồng bộ từ `CamAI.API` lên RAM khi khởi động.
     *   Trực tiếp xử lý đẩy ảnh (Snapshots/Face) lên **MinIO** và sau đó gửi Metadata về cho `CamAI.API`.
+    *   **Multi-Camera Support:** Cho phép cấu hình và xử lý AI song song cho nhiều camera cùng lúc qua file cấu hình.
+
+### 1.3. Visual Debug Stream (MJPEG)
+*   **Truy cập:** `http://localhost:5120/api/FaceStream/live`
+*   **Trách nhiệm:** Cung cấp luồng video trực tiếp có vẽ khung nhận diện (Bounding Boxes) và tên người dùng để giám sát và gỡ lỗi.
 
 ---
 
@@ -37,6 +42,30 @@ Hệ thống được thiết kế theo kiến trúc Microservices, tách biệt
 *   **Database:** SQL Server + Dapper (High performance).
 *   **Object Storage:** MinIO SDK (S3 Compatible).
 *   **Containerization:** Docker Compose for Infrastructure.
+*   **Networking:** Tailscale Mesh VPN (để kết nối camera từ xa qua mạng khác).
+
+---
+
+## 4. Configuration: Multi-Camera Management
+Cấu hình danh sách Camera được quản lý tại file `appsettings.json` của AI Engine:
+
+```json
+"CameraSettings": {
+  "Cameras": [
+    {
+      "Id": "Cam01",
+      "Name": "Cổng Chính",
+      "Url": "rtsp://100.120.x.x:8554/mystream"
+    },
+    {
+      "Id": "Cam02",
+      "Name": "Sân Sau",
+      "Url": "rtsp://100.120.x.x:8554/garden"
+    }
+  ]
+}
+```
+*Hệ thống sẽ tự động khởi tạo các Worker xử lý AI độc lập cho mỗi Camera khi khởi động.*
 
 ---
 

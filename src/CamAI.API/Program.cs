@@ -16,10 +16,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // DAL - Repository
 builder.Services.AddScoped(_ => new UserRepository(connectionString));
 builder.Services.AddScoped(_ => new AccessLogRepository(connectionString));
+builder.Services.AddScoped(_ => new CameraRepository(connectionString));
 
 // BLL - Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAccessLogService, AccessLogService>();
+builder.Services.AddScoped<ICameraService, CameraService>();
 
 // CORS
 builder.Services.AddCors(options =>
