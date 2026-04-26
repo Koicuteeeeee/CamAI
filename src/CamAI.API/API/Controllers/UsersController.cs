@@ -57,11 +57,20 @@ public class UsersController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
+        // Nếu không có Username, dùng FullName (không dấu) + Guid ngắn
+        string username = string.IsNullOrWhiteSpace(request.Username) 
+            ? Guid.NewGuid().ToString("N").Substring(0, 8) 
+            : request.Username;
+
         var newId = await _userService.RegisterAsync(
-            request.Username, 
+            username, 
             request.FullName, 
-            request.Embedding, 
-            request.MinioObjectName
+            request.EmbeddingFront, 
+            request.EmbeddingLeft, 
+            request.EmbeddingRight, 
+            request.MinioFront,
+            request.MinioLeft,
+            request.MinioRight
         );
         return Ok(new { success = true, userId = newId });
     }
@@ -85,6 +94,10 @@ public class RegisterRequest
 {
     public string Username { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public float[] Embedding { get; set; } = Array.Empty<float>();
-    public string MinioObjectName { get; set; } = string.Empty;
+    public float[] EmbeddingFront { get; set; } = Array.Empty<float>();
+    public float[] EmbeddingLeft { get; set; } = Array.Empty<float>();
+    public float[] EmbeddingRight { get; set; } = Array.Empty<float>();
+    public string MinioFront { get; set; } = string.Empty;
+    public string MinioLeft { get; set; } = string.Empty;
+    public string MinioRight { get; set; } = string.Empty;
 }

@@ -2,13 +2,14 @@ using CamAI.API.DAL.Models;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using CamAI.API.DAL.Interfaces;
 
-namespace CamAI.API.DAL.Repository;
+namespace CamAI.API.DAL.Repositories;
 
 /// <summary>
 /// Repository User: Mọi thao tác DB đều qua Stored Procedure.
 /// </summary>
-public class UserRepository
+public class UserRepository : IUserRepository
 {
     private readonly string _connectionString;
 
@@ -38,7 +39,7 @@ public class UserRepository
         );
     }
 
-    public async Task<Guid> RegisterAsync(string username, string fullName, byte[] faceEmbedding, string minioObjectName)
+    public async Task<Guid> RegisterAsync(string username, string fullName, byte[] embeddingFront, byte[] embeddingLeft, byte[] embeddingRight, string minioFront, string minioLeft, string minioRight)
     {
         using var conn = CreateConnection();
         return await conn.ExecuteScalarAsync<Guid>(
@@ -47,8 +48,12 @@ public class UserRepository
             {
                 Username = username,
                 FullName = fullName,
-                FaceEmbedding = faceEmbedding,
-                MinioObjectName = minioObjectName
+                EmbeddingFront = embeddingFront,
+                EmbeddingLeft = embeddingLeft,
+                EmbeddingRight = embeddingRight,
+                MinioFront = minioFront,
+                MinioLeft = minioLeft,
+                MinioRight = minioRight
             },
             commandType: CommandType.StoredProcedure
         );

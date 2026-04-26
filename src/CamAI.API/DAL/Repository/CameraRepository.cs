@@ -3,9 +3,11 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace CamAI.API.DAL.Repository;
+using CamAI.API.DAL.Interfaces;
 
-public class CameraRepository
+namespace CamAI.API.DAL.Repositories;
+
+public class CameraRepository : ICameraRepository
 {
     private readonly string _connectionString;
 

@@ -1,8 +1,15 @@
 using CamAI.API.BLL.Interfaces;
 using CamAI.API.BLL.Services;
-using CamAI.API.DAL.Repository;
+using CamAI.API.DAL.Interfaces;
+using CamAI.API.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// === CẤU HÌNH CONFIGURATION ===
+builder.Configuration.SetBasePath(builder.Environment.ContentRootPath);
+builder.Configuration.AddJsonFile("API/appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"API/appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddEnvironmentVariables();
 
 // === SERVICES ===
 builder.Services.AddControllers();
@@ -14,14 +21,16 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("ConnectionString 'DefaultConnection' chưa được cấu hình.");
 
 // DAL - Repository
-builder.Services.AddScoped(_ => new UserRepository(connectionString));
-builder.Services.AddScoped(_ => new AccessLogRepository(connectionString));
-builder.Services.AddScoped(_ => new CameraRepository(connectionString));
+builder.Services.AddScoped<IUserRepository>(_ => new UserRepository(connectionString));
+builder.Services.AddScoped<IAccessLogRepository>(_ => new AccessLogRepository(connectionString));
+builder.Services.AddScoped<ICameraRepository>(_ => new CameraRepository(connectionString));
+builder.Services.AddScoped<ICameraEventRepository>(_ => new CameraEventRepository(connectionString));
 
 // BLL - Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAccessLogService, AccessLogService>();
 builder.Services.AddScoped<ICameraService, CameraService>();
+builder.Services.AddScoped<ICameraEventService, CameraEventService>();
 
 // CORS
 builder.Services.AddCors(options =>

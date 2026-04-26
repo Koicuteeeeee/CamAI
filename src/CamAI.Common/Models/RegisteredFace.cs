@@ -11,9 +11,21 @@ public class RegisteredFace
     /// <summary>Tên đầy đủ.</summary>
     public string FullName { get; set; } = string.Empty;
 
-    /// <summary>Vector đặc trưng khuôn mặt (128 hoặc 512 chiều tùy model).</summary>
-    public float[] Embedding { get; set; } = [];
+    /// <summary>Vector đặc trưng khuôn mặt (trực diện).</summary>
+    public float[] EmbeddingFront { get; set; } = [];
 
-    /// <summary>Đường dẫn lưu trên MinIO.</summary>
-    public string MinioObjectName { get; set; } = string.Empty;
+    /// <summary>Vector đặc trưng khuôn mặt (nghiêng trái).</summary>
+    public float[] EmbeddingLeft { get; set; } = [];
+
+    /// <summary>Vector đặc trưng khuôn mặt (nghiêng phải).</summary>
+    public float[] EmbeddingRight { get; set; } = [];
+
+    /// <summary>Đường dẫn tệp ảnh trực diện trên MinIO.</summary>
+    public string MinioFront { get; set; } = string.Empty;
+
+    /// <summary>Đường dẫn tệp ảnh nghiêng trái trên MinIO.</summary>
+    public string MinioLeft { get; set; } = string.Empty;
+
+    /// <summary>Đường dẫn tệp ảnh nghiêng phải trên MinIO.</summary>
+    public string MinioRight { get; set; } = string.Empty;
 }

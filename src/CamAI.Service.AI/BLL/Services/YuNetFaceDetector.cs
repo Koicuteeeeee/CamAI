@@ -1,8 +1,8 @@
-using CamAI.Common.Interfaces;
 using CamAI.Common.Models;
+using CamAI.Service.AI.BLL.Interfaces;
 using OpenCvSharp;
 
-namespace CamAI.Service.AI.Services;
+namespace CamAI.Service.AI.BLL.Services;
 
 /// <summary>
 /// Phát hiện khuôn mặt bằng YuNet của OpenCV.
@@ -25,14 +25,15 @@ public class YuNetFaceDetector : IFaceDetector
         _logger.LogInformation("YuNet FaceDetector loaded: {Path}", modelPath);
     }
 
-    public List<FaceDetectionResult> Detect(Mat frame, float confidenceThreshold = 0.5f)
+    private float _currentConfidenceThreshold = 0;
+
+    public List<FaceDetectionResult> Detect(Mat frame, float confidenceThreshold = 0.4f)
     {
         var results = new List<FaceDetectionResult>();
         if (frame.Empty()) return results;
 
-        // YuNet hoạt động kém với khuôn mặt quá lớn (ảnh độ phân giải cao).
-        // Ta cần thu nhỏ lại một kích thước tối đa (ví dụ 640)
-        int maxSize = 640;
+        // Giảm maxSize xuống 720 để tăng tốc độ xử lý, tránh trễ luồng
+        int maxSize = 720;
         float scale = 1.0f;
         Mat detectFrame = frame;
 
@@ -40,15 +41,17 @@ public class YuNetFaceDetector : IFaceDetector
         {
             scale = Math.Min((float)maxSize / frame.Width, (float)maxSize / frame.Height);
             detectFrame = new Mat();
-            Cv2.Resize(frame, detectFrame, new Size((int)(frame.Width * scale), (int)(frame.Height * scale)));
+            Cv2.Resize(frame, detectFrame, new Size((int)(frame.Width * scale), (int)(frame.Height * scale)), 0, 0, InterpolationFlags.Area);
         }
 
-        if (_detector == null || _currentWidth != detectFrame.Width || _currentHeight != detectFrame.Height)
+        if (_detector == null || _currentWidth != detectFrame.Width || _currentHeight != detectFrame.Height || _currentConfidenceThreshold != confidenceThreshold)
         {
             _detector?.Dispose();
-            _detector = FaceDetectorYN.Create(_modelPath, "", new Size(detectFrame.Width, detectFrame.Height), confidenceThreshold);
+            // YuNet 2023: scoreThreshold=0.4, nmsThreshold=0.3, topK=5000 là tối ưu cho nhiều góc độ
+            _detector = FaceDetectorYN.Create(_modelPath, "", new Size(detectFrame.Width, detectFrame.Height), confidenceThreshold, 0.3f, 5000);
             _currentWidth = detectFrame.Width;
             _currentHeight = detectFrame.Height;
+            _currentConfidenceThreshold = confidenceThreshold;
         }
 
         using var faces = new Mat();

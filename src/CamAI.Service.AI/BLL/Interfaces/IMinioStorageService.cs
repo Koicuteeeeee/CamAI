@@ -1,7 +1,4 @@
-using System.IO;
-using System.Threading.Tasks;
-
-namespace CamAI.Common.Interfaces;
+namespace CamAI.Service.AI.BLL.Interfaces;
 
 public interface IMinioStorageService
 {

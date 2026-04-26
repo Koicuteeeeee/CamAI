@@ -1,4 +1,4 @@
-using CamAI.Common.Interfaces;
+using CamAI.Service.AI.BLL.Interfaces;
 using Minio;
 using Minio.DataModel.Args;
 

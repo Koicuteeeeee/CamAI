@@ -32,7 +32,7 @@ public class AccessLogsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Insert([FromBody] AccessLogRequest request)
     {
-        await _logService.LogAccessAsync(request.UserId, request.ActionTaken, request.MinioLogImage, request.DeviceImpacted);
+        await _logService.LogAccessAsync(request.UserId, request.MinioLogImage, request.DeviceImpacted, request.RecognitionStatus, request.ConfidenceScore);
         return Ok(new { success = true, message = "Đã ghi nhật ký" });
     }
 }
@@ -40,7 +40,8 @@ public class AccessLogsController : ControllerBase
 public class AccessLogRequest
 {
     public Guid? UserId { get; set; }
-    public string ActionTaken { get; set; } = string.Empty;
     public string? MinioLogImage { get; set; }
     public string? DeviceImpacted { get; set; }
+    public string? RecognitionStatus { get; set; }
+    public double? ConfidenceScore { get; set; }
 }

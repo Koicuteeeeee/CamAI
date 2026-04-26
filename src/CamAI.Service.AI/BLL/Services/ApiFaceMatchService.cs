@@ -1,26 +1,24 @@
-using System.Net.Http.Json;
-using System.Text.Json;
-using CamAI.Common.Interfaces;
 using CamAI.Common.Models;
-using CamAI.Service.AI.BLL.Models;
+using CamAI.Service.AI.DAL.Interfaces;
+using CamAI.Service.AI.DAL.Models;
+using CamAI.Service.AI.BLL.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace CamAI.Service.AI.Services;
+namespace CamAI.Service.AI.BLL.Services;
 
 /// <summary>
-/// So khớp khuôn mặt, đọc/ghi dữ liệu thông qua CamAI.API thay vì lưu file cục bộ.
+/// So khớp khuôn mặt, đọc/ghi dữ liệu thông qua Repository thay vì gọi HttpClient trực tiếp.
 /// </summary>
 public class ApiFaceMatchService : IFaceMatchService
 {
-    private readonly HttpClient _httpClient;
+    private readonly IFaceDataRepository _faceRepo;
     private readonly ILogger<ApiFaceMatchService> _logger;
     private Dictionary<Guid, RegisteredFace> _registeredFaces = new();
     private readonly object _lock = new();
-    private readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public ApiFaceMatchService(HttpClient httpClient, ILogger<ApiFaceMatchService> logger)
+    public ApiFaceMatchService(IFaceDataRepository faceRepo, ILogger<ApiFaceMatchService> logger)
     {
-        _httpClient = httpClient;
+        _faceRepo = faceRepo;
         _logger = logger;
         _ = SyncWithApiAsync();
     }
@@ -32,28 +30,33 @@ public class ApiFaceMatchService : IFaceMatchService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<ApiFaceResponse>("api/users/faces", _jsonOptions);
-            if (response != null && response.Success && response.Data != null)
+            var data = await _faceRepo.GetAllFaceEmbeddingsAsync();
+            if (data != null)
             {
                 lock (_lock)
                 {
                     _registeredFaces.Clear();
-                    foreach (var record in response.Data)
+                    foreach (var record in data)
                     {
                         _registeredFaces[record.UserId] = new RegisteredFace
                         {
                             UserId = record.UserId,
                             FullName = record.FullName,
-                            Embedding = record.Embedding
+                            EmbeddingFront = record.EmbeddingFront,
+                            EmbeddingLeft = record.EmbeddingLeft,
+                            EmbeddingRight = record.EmbeddingRight,
+                            MinioFront = record.MinioFront,
+                            MinioLeft = record.MinioLeft,
+                            MinioRight = record.MinioRight
                         };
                     }
                 }
-                _logger.LogInformation("[MatchService] Da dong bo {Count} khuon mat tu API.", _registeredFaces.Count);
+                _logger.LogInformation("[MatchService] Da dong bo {Count} khuon mat (3 goc) tu API.", _registeredFaces.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Loi khi dong bo khuon mat tu API. Vui long kiem tra CamAI.API da chay chua.");
+            _logger.LogError(ex, "Loi khi dong bo khuon mat tu API.");
         }
     }
 
@@ -77,10 +80,16 @@ public class ApiFaceMatchService : IFaceMatchService
 
             foreach (var face in _registeredFaces.Values)
             {
-                float sim = CosineSimilarity(embedding, face.Embedding);
-                if (sim > maxSim)
+                // So khớp với cả 3 góc độ, lấy góc có độ tương đồng cao nhất
+                float simFront = CosineSimilarity(embedding, face.EmbeddingFront);
+                float simLeft = CosineSimilarity(embedding, face.EmbeddingLeft);
+                float simRight = CosineSimilarity(embedding, face.EmbeddingRight);
+
+                float bestSim = Math.Max(simFront, Math.Max(simLeft, simRight));
+
+                if (bestSim > maxSim)
                 {
-                    maxSim = sim;
+                    maxSim = bestSim;
                     bestUserId = face.UserId;
                     bestName = face.FullName;
                 }
@@ -102,30 +111,17 @@ public class ApiFaceMatchService : IFaceMatchService
         return result;
     }
 
-    public void Register(RegisteredFace face)
+    public async Task RegisterAsync(RegisteredFace face)
     {
         try
         {
-            var request = new
-            {
-                Username = face.FullName.ToLower().Replace(" ", ""),
-                FullName = face.FullName,
-                Embedding = face.Embedding,
-                MinioObjectName = face.MinioObjectName
-            };
-
-            var postTask = _httpClient.PostAsJsonAsync("api/users/register", request, _jsonOptions);
-            postTask.Wait(); 
-
-            if (postTask.Result.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("Da dang ky thanh cong len API: {Name}", face.FullName);
-                _ = SyncWithApiAsync();
-            }
+            await _faceRepo.RegisterFaceAsync(face);
+            _logger.LogInformation("✅ [MatchService] Da dang ky thanh cong: {Name}", face.FullName);
+            await SyncWithApiAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Khong the ket noi den CamAI.API de dang ky.");
+            _logger.LogError(ex, "❌ [MatchService] Loi khi dang ky khuon mat.");
         }
     }
 
@@ -139,23 +135,8 @@ public class ApiFaceMatchService : IFaceMatchService
 
     public bool Remove(Guid userId)
     {
-        try
-        {
-            var deleteTask = _httpClient.DeleteAsync($"api/users/{userId}");
-            deleteTask.Wait();
-            if (deleteTask.Result.IsSuccessStatusCode)
-            {
-                lock (_lock)
-                {
-                    _registeredFaces.Remove(userId);
-                }
-                return true;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Khong the xoa User tren API.");
-        }
+        // TODO: Implement Delete in Repository if needed
+        _logger.LogWarning("Remove not implemented via Repository yet.");
         return false;
     }
 

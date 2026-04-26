@@ -1,14 +1,14 @@
 using CamAI.API.BLL.Interfaces;
+using CamAI.API.DAL.Interfaces;
 using CamAI.API.DAL.Models;
-using CamAI.API.DAL.Repository;
 
 namespace CamAI.API.BLL.Services;
 
 public class UserService : IUserService
 {
-    private readonly UserRepository _userRepo;
+    private readonly IUserRepository _userRepo;
 
-    public UserService(UserRepository userRepo)
+    public UserService(IUserRepository userRepo)
     {
         _userRepo = userRepo;
     }
@@ -22,10 +22,12 @@ public class UserService : IUserService
     /// <summary>
     /// Đăng ký User mới. Chuyển float[] embedding sang byte[] để lưu DB.
     /// </summary>
-    public async Task<Guid> RegisterAsync(string username, string fullName, float[] embedding, string minioObjectName)
+    public async Task<Guid> RegisterAsync(string username, string fullName, float[] embeddingFront, float[] embeddingLeft, float[] embeddingRight, string minioFront, string minioLeft, string minioRight)
     {
-        byte[] embeddingBytes = EmbeddingToBytes(embedding);
-        return await _userRepo.RegisterAsync(username, fullName, embeddingBytes, minioObjectName);
+        byte[] frontBytes = EmbeddingToBytes(embeddingFront);
+        byte[] leftBytes = EmbeddingToBytes(embeddingLeft);
+        byte[] rightBytes = EmbeddingToBytes(embeddingRight);
+        return await _userRepo.RegisterAsync(username, fullName, frontBytes, leftBytes, rightBytes, minioFront, minioLeft, minioRight);
     }
 
     /// <summary>
@@ -38,8 +40,12 @@ public class UserService : IUserService
         {
             UserId = f.UserId,
             FullName = f.FullName,
-            Embedding = BytesToEmbedding(f.FaceEmbedding),
-            MinioObjectName = f.MinioObjectName
+            EmbeddingFront = BytesToEmbedding(f.EmbeddingFront),
+            EmbeddingLeft = BytesToEmbedding(f.EmbeddingLeft),
+            EmbeddingRight = BytesToEmbedding(f.EmbeddingRight),
+            MinioFront = f.MinioFront,
+            MinioLeft = f.MinioLeft,
+            MinioRight = f.MinioRight
         }).ToList();
     }
 

@@ -1,18 +1,34 @@
-using CamAI.Common.Interfaces;
-using CamAI.Service.AI.Services;
+using CamAI.Service.AI.BLL.Interfaces;
 using CamAI.Service.AI.BLL.Services;
+using CamAI.Service.AI.DAL.Interfaces;
+using CamAI.Service.AI.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// === CẤU HÌNH CONFIGURATION ===
+builder.Configuration.SetBasePath(builder.Environment.ContentRootPath);
+builder.Configuration.AddJsonFile("API/appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"API/appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddEnvironmentVariables();
 
 // === CẤU HÌNH SERVICES ===
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Connection
+builder.Services.AddHttpClient("CamAI_API", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5282/"); // Port của CamAI.API
+});
+
+// DAL - Repositories
+builder.Services.AddSingleton<ICameraRepository, CameraRepository>();
+builder.Services.AddSingleton<IFaceDataRepository, FaceDataRepository>();
+builder.Services.AddSingleton<IApiLogRepository, ApiLogRepository>();
+
 // Đường dẫn tới thư mục chứa model ONNX
 var modelsPath = Path.Combine(builder.Environment.ContentRootPath, "Infrastructure", "Models", "onnx");
-
-// Tạo thư mục nếu chưa có
 Directory.CreateDirectory(modelsPath);
 
 // Đăng ký AI Services vào DI Container
@@ -30,21 +46,16 @@ builder.Services.AddSingleton<IFaceEmbedder>(sp =>
     return new SFaceEmbedder(modelFile, logger);
 });
 
-builder.Services.AddHttpClient("CamAI_API", client =>
-{
-    client.BaseAddress = new Uri("http://localhost:5282/"); // Port của CamAI.API
-});
+builder.Services.AddSingleton<IFaceMatchService, ApiFaceMatchService>();
 
-builder.Services.AddSingleton<IFaceMatchService>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var client = httpClientFactory.CreateClient("CamAI_API");
-    var logger = sp.GetRequiredService<ILogger<ApiFaceMatchService>>();
-    return new ApiFaceMatchService(client, logger);
-});
+// Thêm dịch vụ đăng ký từ stream
+builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();
+
+// Thêm dịch vụ ghi log camera
+builder.Services.AddSingleton<ICameraEventLogger, CameraEventLogger>();
 
 // Thêm dịch vụ trung chuyển hình ảnh
-builder.Services.AddSingleton<StreamProvider>();
+builder.Services.AddSingleton<IStreamProvider, StreamProvider>();
 
 // Thêm MinIO Storage Service
 builder.Services.AddSingleton<IMinioStorageService, MinioStorageService>();

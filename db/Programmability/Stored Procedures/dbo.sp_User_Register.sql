@@ -1,7 +1,9 @@
 CREATE OR ALTER PROCEDURE [dbo].[sp_User_Register]
     @Username NVARCHAR(50),
     @FullName NVARCHAR(100),
-    @FaceEmbedding VARBINARY(MAX),
+    @EmbeddingFront VARBINARY(MAX),
+    @EmbeddingLeft VARBINARY(MAX),
+    @EmbeddingRight VARBINARY(MAX),
     @MinioObjectName NVARCHAR(255)
 AS
 BEGIN
@@ -16,8 +18,8 @@ BEGIN
         VALUES (@NewUserId, @Username, @FullName, 1);
 
         -- Thêm Khuôn mặt
-        INSERT INTO [dbo].[UserFaces] ([UserId], [MinioObjectName], [FaceEmbedding])
-        VALUES (@NewUserId, @MinioObjectName, @FaceEmbedding);
+        INSERT INTO [dbo].[UserFaces] ([UserId], [MinioObjectName], [EmbeddingFront], [EmbeddingLeft], [EmbeddingRight])
+        VALUES (@NewUserId, @MinioObjectName, @EmbeddingFront, @EmbeddingLeft, @EmbeddingRight);
 
         COMMIT TRANSACTION;
         SELECT @NewUserId AS NewUserId;

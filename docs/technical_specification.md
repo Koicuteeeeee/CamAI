@@ -10,7 +10,8 @@ Xây dựng hệ thống điều khiển thiết bị thông minh bằng cử ch
 
 ### 2.1. Face Recognition Layer
 *   **Chế độ chờ:** Camera luôn quét để phát hiện khuôn mặt.
-*   **Xác thực:** So khớp mặt người đang đứng trước cam với dữ liệu "Người quen".
+*   **Xác thực:** So khớp mặt người đang đứng trước cam với dữ liệu "Người quen". 
+*   **Đăng ký:** Yêu cầu đăng ký 3 góc độ (Trực diện, Trái, Phải) để đảm bảo xác thực chính xác khi người dùng đứng nghiêng điều khiển thiết bị.
 *   **Trạng thái:** Nếu là người quen, hệ thống chuyển sang trạng thái "Lắng nghe cử chỉ" (Listening) trong một khoảng thời gian nhất định (Timeout).
 
 ### 2.2. Gesture Control Layer

@@ -1,14 +1,14 @@
 using CamAI.API.BLL.Interfaces;
+using CamAI.API.DAL.Interfaces;
 using CamAI.API.DAL.Models;
-using CamAI.API.DAL.Repository;
 
 namespace CamAI.API.BLL.Services;
 
 public class CameraService : ICameraService
 {
-    private readonly CameraRepository _cameraRepository;
+    private readonly ICameraRepository _cameraRepository;
 
-    public CameraService(CameraRepository cameraRepository)
+    public CameraService(ICameraRepository cameraRepository)
     {
         _cameraRepository = cameraRepository;
     }

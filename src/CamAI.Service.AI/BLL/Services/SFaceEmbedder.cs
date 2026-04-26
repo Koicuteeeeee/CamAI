@@ -6,10 +6,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
-using CamAI.Common.Interfaces;
 using CamAI.Common.Models;
+using CamAI.Service.AI.BLL.Interfaces;
 
-namespace CamAI.Service.AI.Services;
+namespace CamAI.Service.AI.BLL.Services;
 
 public class SFaceEmbedder : IFaceEmbedder
 {

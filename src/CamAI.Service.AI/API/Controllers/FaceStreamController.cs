@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using CamAI.Service.AI.BLL.Services;
+using CamAI.Service.AI.BLL.Interfaces;
 using System.Net.Http.Headers;
 
 namespace CamAI.Service.AI.API.Controllers;
@@ -8,9 +8,9 @@ namespace CamAI.Service.AI.API.Controllers;
 [Route("api/[controller]")]
 public class FaceStreamController : ControllerBase
 {
-    private readonly StreamProvider _streamProvider;
+    private readonly IStreamProvider _streamProvider;
 
-    public FaceStreamController(StreamProvider streamProvider)
+    public FaceStreamController(IStreamProvider streamProvider)
     {
         _streamProvider = streamProvider;
     }
@@ -40,8 +40,8 @@ public class FaceStreamController : ControllerBase
                 await response.Body.FlushAsync(ct);
             }
 
-            // Đồng bộ tốc độ phát khoảng 25-30fps
-            await Task.Delay(40, ct);
+            // Đồng bộ tốc độ phát khoảng 30fps
+            await Task.Delay(33, ct);
         }
     }
 }

@@ -1,9 +1,11 @@
-using CamAI.Common.Interfaces;
 using CamAI.Common.Models;
+using CamAI.Service.AI.BLL.Services;
+using CamAI.Service.AI.BLL.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using OpenCvSharp;
+using Microsoft.AspNetCore.Http;
 
-namespace CamAI.Service.AI.Controllers;
+namespace CamAI.Service.AI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -13,6 +15,8 @@ public class FaceController : ControllerBase
     private readonly IFaceEmbedder _embedder;
     private readonly IFaceMatchService _matchService;
     private readonly IMinioStorageService _minioStorageService;
+    private readonly IEnrollmentService _enrollmentService;
+    private readonly ICameraEventLogger _eventLogger;
     private readonly ILogger<FaceController> _logger;
 
     public FaceController(
@@ -20,13 +24,55 @@ public class FaceController : ControllerBase
         IFaceEmbedder embedder,
         IFaceMatchService matchService,
         IMinioStorageService minioStorageService,
+        IEnrollmentService enrollmentService,
+        ICameraEventLogger eventLogger,
         ILogger<FaceController> logger)
     {
         _detector = detector;
         _embedder = embedder;
         _matchService = matchService;
         _minioStorageService = minioStorageService;
+        _enrollmentService = enrollmentService;
+        _eventLogger = eventLogger;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Bắt đầu quá trình đăng ký từ stream cho một người.
+    /// POST /api/face/enroll/start
+    /// </summary>
+    [HttpPost("enroll/start")]
+    public async Task<IActionResult> StartEnroll([FromBody] EnrollStartRequest request)
+    {
+        if (string.IsNullOrEmpty(request.FullName)) 
+            return BadRequest(new { success = false, message = "Vui lòng nhập tên đầy đủ" });
+            
+        _enrollmentService.StartEnrollment(request.FullName);
+        await _eventLogger.LogEventAsync("ENROLL_START", $"Bắt đầu quá trình quét mặt cho: {request.FullName}");
+        return Ok(new { success = true, message = $"Bắt đầu quét mặt cho {request.FullName}. Hãy nhìn thẳng, rồi quay trái/phải từ từ trước camera." });
+    }
+
+    /// <summary>
+    /// Xem trạng thái đăng ký hiện tại.
+    /// GET /api/face/enroll/status
+    /// </summary>
+    [HttpGet("enroll/status")]
+    public IActionResult GetEnrollStatus()
+    {
+        var req = _enrollmentService.GetCurrentRequest();
+        if (req == null) return Ok(new { active = false });
+
+        return Ok(new
+        {
+            active = true,
+            req.FullName,
+            progress = new
+            {
+                front = req.EmbeddingFront != null,
+                left = req.EmbeddingLeft != null,
+                right = req.EmbeddingRight != null
+            }
+        });
     }
 
     /// <summary>
@@ -146,15 +192,18 @@ public class FaceController : ControllerBase
             ms.Position = 0;
             string extension = Path.GetExtension(file.FileName);
             if (string.IsNullOrEmpty(extension)) extension = ".jpg";
-            string objectName = $"faces/{Guid.NewGuid()}{extension}";
-            string minioUrl = await _minioStorageService.UploadFileAsync("cam-ai-faces", objectName, ms, file.ContentType);
+            string datePath = DateTime.Now.ToString("yyyy/MM/dd");
+            string personId = Guid.NewGuid().ToString();
+            string objectName = $"register/{datePath}/{personId}_front{extension}";
+            
+            string minioUrl = await _minioStorageService.UploadFileAsync("faces", objectName, ms, file.ContentType);
 
             // Đăng ký (Gửi thông tin ObjectName sang CamAI.API)
-            _matchService.Register(new RegisteredFace
+            await _matchService.RegisterAsync(new RegisteredFace
             {
                 FullName = fullName,
-                Embedding = embedding,
-                MinioObjectName = minioUrl
+                EmbeddingFront = embedding, 
+                MinioFront = minioUrl // Dùng làm ảnh chính diện
             });
 
             return Ok(new
@@ -169,6 +218,80 @@ public class FaceController : ControllerBase
             _logger.LogError(ex, "Lỗi khi đăng ký khuôn mặt");
             return StatusCode(500, new { success = false, message = "Lỗi server: " + ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Đăng ký khuôn mặt đa góc độ (Trực diện, Trái, Phải).
+    /// POST /api/face/register-multi
+    /// </summary>
+    [HttpPost("register-multi")]
+    public async Task<IActionResult> RegisterMulti(
+        IFormFile frontFile,
+        IFormFile leftFile,
+        IFormFile rightFile,
+        [FromForm] string fullName)
+    {
+        if (frontFile == null || leftFile == null || rightFile == null)
+            return BadRequest(new { success = false, message = "Vui lòng upload đủ 3 ảnh (Chính diện, Trái, Phải)" });
+
+        if (string.IsNullOrWhiteSpace(fullName))
+            return BadRequest(new { success = false, message = "Vui lòng nhập tên" });
+
+        try
+        {
+            var embFront = await GetEmbeddingFromFile(frontFile);
+            var embLeft = await GetEmbeddingFromFile(leftFile);
+            var embRight = await GetEmbeddingFromFile(rightFile);
+
+            if (embFront == null || embLeft == null || embRight == null)
+                return BadRequest(new { success = false, message = "Không thể trích xuất vector từ một trong các ảnh" });
+
+            string personId = Guid.NewGuid().ToString();
+            string datePath = DateTime.Now.ToString("yyyy/MM/dd");
+            string bucket = "faces";
+            
+            // Upload 3 ảnh lên MinIO theo cấu trúc Năm/Tháng/Ngày
+            string urlFront = await _minioStorageService.UploadFileAsync(bucket, $"register/{datePath}/{personId}_front.jpg", frontFile.OpenReadStream(), frontFile.ContentType);
+            string urlLeft = await _minioStorageService.UploadFileAsync(bucket, $"register/{datePath}/{personId}_left.jpg", leftFile.OpenReadStream(), leftFile.ContentType);
+            string urlRight = await _minioStorageService.UploadFileAsync(bucket, $"register/{datePath}/{personId}_right.jpg", rightFile.OpenReadStream(), rightFile.ContentType);
+
+            // Đăng ký 3 góc độ
+            await _matchService.RegisterAsync(new RegisteredFace
+            {
+                FullName = fullName,
+                EmbeddingFront = embFront,
+                EmbeddingLeft = embLeft,
+                EmbeddingRight = embRight,
+                MinioFront = urlFront,
+                MinioLeft = urlLeft,
+                MinioRight = urlRight
+            });
+
+            return Ok(new
+            {
+                success = true,
+                message = $"Đã đăng ký khuôn mặt đa góc độ cho {fullName} thành công",
+                angles = new[] { "front", "left", "right" }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi đăng ký đa góc độ");
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    private async Task<float[]?> GetEmbeddingFromFile(IFormFile file)
+    {
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms);
+        using var frame = Cv2.ImDecode(ms.ToArray(), ImreadModes.Color);
+        if (frame.Empty()) return null;
+
+        var detections = _detector.Detect(frame);
+        if (detections.Count != 1) return null; // Chỉ chấp nhận ảnh có đúng 1 mặt
+
+        return _embedder.GetEmbedding(frame, detections[0]);
     }
 
     /// <summary>
@@ -189,7 +312,7 @@ public class FaceController : ControllerBase
                 {
                     f.UserId,
                     f.FullName,
-                    embeddingSize = f.Embedding != null ? f.Embedding.Length : -1
+                    embeddingSize = f.EmbeddingFront != null ? f.EmbeddingFront.Length : -1
                 }).ToList()
             });
         }
@@ -221,4 +344,9 @@ public class FaceController : ControllerBase
         int h = Math.Min(rect.Height, maxHeight - y);
         return new Rect(x, y, Math.Max(1, w), Math.Max(1, h));
     }
+}
+
+public class EnrollStartRequest
+{
+    public string FullName { get; set; } = string.Empty;
 }

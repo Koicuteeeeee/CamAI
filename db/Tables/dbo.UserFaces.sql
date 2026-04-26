@@ -2,7 +2,9 @@ CREATE TABLE [dbo].[UserFaces] (
     [Id] UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     [UserId] UNIQUEIDENTIFIER NOT NULL,
     [MinioObjectName] NVARCHAR(255) NULL,
-    [FaceEmbedding] VARBINARY(MAX) NOT NULL,
+    [EmbeddingFront] VARBINARY(MAX) NULL,
+    [EmbeddingLeft] VARBINARY(MAX) NULL,
+    [EmbeddingRight] VARBINARY(MAX) NULL,
     [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
     CONSTRAINT [FK_UserFaces_Users] FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users]([Id]) ON DELETE CASCADE
 );

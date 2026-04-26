@@ -1,6 +1,6 @@
 using System;
 
-namespace CamAI.Service.AI.BLL.Models;
+namespace CamAI.Service.AI.DAL.Models;
 
 public class CameraConfig
 {

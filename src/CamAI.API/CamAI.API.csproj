@@ -15,7 +15,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CamAI.Common\CamAI.Common.csproj" />
+    <None Update="API\appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="API\appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CamAI.Common\CamAI.Common.csproj" />
+  </ItemGroup>
 </Project>

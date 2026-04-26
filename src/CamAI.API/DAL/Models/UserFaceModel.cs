@@ -5,7 +5,11 @@ public class UserFaceModel
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public string FullName { get; set; } = string.Empty;
-    public string MinioObjectName { get; set; } = string.Empty;
-    public byte[] FaceEmbedding { get; set; } = Array.Empty<byte>();
+    public string MinioFront { get; set; } = string.Empty;
+    public string MinioLeft { get; set; } = string.Empty;
+    public string MinioRight { get; set; } = string.Empty;
+    public byte[] EmbeddingFront { get; set; } = Array.Empty<byte>();
+    public byte[] EmbeddingLeft { get; set; } = Array.Empty<byte>();
+    public byte[] EmbeddingRight { get; set; } = Array.Empty<byte>();
     public DateTime CreatedAt { get; set; }
 }
