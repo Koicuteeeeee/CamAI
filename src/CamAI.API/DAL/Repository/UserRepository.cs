@@ -6,9 +6,6 @@ using CamAI.API.DAL.Interfaces;
 
 namespace CamAI.API.DAL.Repositories;
 
-/// <summary>
-/// Repository User: Mọi thao tác DB đều qua Stored Procedure.
-/// </summary>
 public class UserRepository : IUserRepository
 {
     private readonly string _connectionString;
@@ -20,26 +17,24 @@ public class UserRepository : IUserRepository
 
     private IDbConnection CreateConnection() => new SqlConnection(_connectionString);
 
-    public async Task<IEnumerable<UserModel>> GetAllActiveAsync()
+    public async Task<IEnumerable<UserModel>> GetAllAsync()
     {
         using var conn = CreateConnection();
         return await conn.QueryAsync<UserModel>(
-            "sp_User_GetAllActive",
-            commandType: CommandType.StoredProcedure
+            "SELECT * FROM Users WHERE IsActive = 1"
         );
     }
 
-    public async Task<UserModel?> GetByIdAsync(Guid id)
+    public async Task<UserModel?> GetByUsernameAsync(string username)
     {
         using var conn = CreateConnection();
         return await conn.QueryFirstOrDefaultAsync<UserModel>(
-            "sp_User_GetById",
-            new { Id = id },
-            commandType: CommandType.StoredProcedure
+            "SELECT * FROM Users WHERE Username = @Username",
+            new { Username = username }
         );
     }
 
-    public async Task<Guid> RegisterAsync(string username, string fullName, byte[] embeddingFront, byte[] embeddingLeft, byte[] embeddingRight, string minioFront, string minioLeft, string minioRight)
+    public async Task<Guid> RegisterAsync(string username, string? email, string? fullName, string? role, Guid? keycloakId, string? createdBy = null)
     {
         using var conn = CreateConnection();
         return await conn.ExecuteScalarAsync<Guid>(
@@ -47,34 +42,22 @@ public class UserRepository : IUserRepository
             new
             {
                 Username = username,
+                Email = email,
                 FullName = fullName,
-                EmbeddingFront = embeddingFront,
-                EmbeddingLeft = embeddingLeft,
-                EmbeddingRight = embeddingRight,
-                MinioFront = minioFront,
-                MinioLeft = minioLeft,
-                MinioRight = minioRight
+                Role = role,
+                KeycloakId = keycloakId,
+                CreatedBy = createdBy
             },
             commandType: CommandType.StoredProcedure
         );
     }
 
-    public async Task<IEnumerable<UserFaceModel>> GetAllFaceEmbeddingsAsync()
-    {
-        using var conn = CreateConnection();
-        return await conn.QueryAsync<UserFaceModel>(
-            "sp_UserFace_GetAll",
-            commandType: CommandType.StoredProcedure
-        );
-    }
-
-    public async Task<bool> DeleteAsync(Guid userId)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         using var conn = CreateConnection();
         var affected = await conn.ExecuteAsync(
-            "sp_User_Delete",
-            new { UserId = userId },
-            commandType: CommandType.StoredProcedure
+            "UPDATE Users SET IsActive = 0 WHERE Id = @Id",
+            new { Id = id }
         );
         return affected > 0;
     }

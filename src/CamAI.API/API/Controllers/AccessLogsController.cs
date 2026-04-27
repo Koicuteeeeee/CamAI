@@ -1,4 +1,5 @@
 using CamAI.API.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CamAI.API.API.Controllers;
@@ -18,6 +19,7 @@ public class AccessLogsController : ControllerBase
     /// Lấy lịch sử nhận diện (phân trang).
     /// GET /api/accesslogs?page=1&pageSize=20
     /// </summary>
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
@@ -32,16 +34,18 @@ public class AccessLogsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Insert([FromBody] AccessLogRequest request)
     {
-        await _logService.LogAccessAsync(request.UserId, request.MinioLogImage, request.DeviceImpacted, request.RecognitionStatus, request.ConfidenceScore);
+        await _logService.LogAccessAsync(request.ProfileId, request.FullName, request.MinioLogImage, request.DeviceImpacted, request.RecognitionStatus, request.ConfidenceScore, request.CreatedBy);
         return Ok(new { success = true, message = "Đã ghi nhật ký" });
     }
 }
 
 public class AccessLogRequest
 {
-    public Guid? UserId { get; set; }
+    public Guid? ProfileId { get; set; }
+    public string? FullName { get; set; }
     public string? MinioLogImage { get; set; }
     public string? DeviceImpacted { get; set; }
     public string? RecognitionStatus { get; set; }
     public double? ConfidenceScore { get; set; }
+    public string? CreatedBy { get; set; }
 }

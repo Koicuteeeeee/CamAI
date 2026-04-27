@@ -219,13 +219,13 @@ public class CameraService : BackgroundService, ICameraService
                                     {
                                         var result = _matchService.Match(embedding, threshold: (float)config.RecognitionThreshold);
                                         latestMatchResults[i] = result;
-                                        // ... (giữ nguyên logic log access)
-                                        if (result.IsKnown && result.UserId.HasValue)
+                                        
+                                        if (result.IsKnown && result.ProfileId.HasValue)
                                         {
-                                            Guid userId = result.UserId.Value;
-                                            if (!_lastLoggedPersons.ContainsKey(userId) || (DateTime.Now - _lastLoggedPersons[userId]).TotalMinutes > 5)
+                                            Guid profileId = result.ProfileId.Value;
+                                            if (!_lastLoggedPersons.ContainsKey(profileId) || (DateTime.Now - _lastLoggedPersons[profileId]).TotalMinutes > 5)
                                             {
-                                                _lastLoggedPersons[userId] = DateTime.Now;
+                                                _lastLoggedPersons[profileId] = DateTime.Now;
                                                 _ = LogAccessAsync(config, result, frame.Clone());
                                             }
                                         }
@@ -338,7 +338,8 @@ public class CameraService : BackgroundService, ICameraService
 
                 var logRequest = new
                 {
-                    UserId = result.UserId,
+                    ProfileId = result.ProfileId,
+                    FullName = result.FullName,
                     MinioLogImage = imageUrl,
                     DeviceImpacted = config.CameraName,
                     RecognitionStatus = recognitionStatus,

@@ -1,8 +1,10 @@
 using CamAI.API.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CamAI.API.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
@@ -15,89 +17,66 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách User đang hoạt động.
-    /// GET /api/users
+    /// Lấy thông tin người dùng đang đăng nhập dựa trên Keycloak ID (sub claim).
+    /// GET /api/users/me
     /// </summary>
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe()
+    {
+        var keycloakIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(keycloakIdStr))
+            return Unauthorized(new { success = false, message = "Không tìm thấy định danh người dùng trong Token" });
+
+        if (!Guid.TryParse(keycloakIdStr, out var keycloakId))
+            return BadRequest(new { success = false, message = "Định danh người dùng không hợp lệ" });
+
+        var users = await _userService.GetAllAsync();
+        var currentUser = users.FirstOrDefault(u => u.KeycloakId == keycloakId);
+
+        if (currentUser == null)
+            return NotFound(new { success = false, message = "Không tìm thấy thông tin người dùng trong hệ thống SQL" });
+
+        return Ok(new { success = true, user = currentUser });
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var users = await _userService.GetAllActiveAsync();
+        var users = await _userService.GetAllAsync();
         return Ok(new { success = true, data = users });
     }
 
-    /// <summary>
-    /// Lấy User theo ID.
-    /// GET /api/users/{id}
-    /// </summary>
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        var user = await _userService.GetByIdAsync(id);
-        if (user == null)
-            return NotFound(new { success = false, message = $"Không tìm thấy User ID: {id}" });
-
-        return Ok(new { success = true, data = user });
-    }
-
-    /// <summary>
-    /// Lấy tất cả Face Embeddings (AI Engine gọi endpoint này để so khớp).
-    /// GET /api/users/faces
-    /// </summary>
-    [HttpGet("faces")]
-    public async Task<IActionResult> GetAllFaces()
-    {
-        var faces = await _userService.GetAllFaceRecordsAsync();
-        return Ok(new { success = true, count = faces.Count, data = faces });
-    }
-
-    /// <summary>
-    /// Lưu User mới cùng Vector khuôn mặt (AI Engine gọi sau khi trích xuất vector).
-    /// POST /api/users/register
-    /// </summary>
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] UserRegisterRequest request)
     {
-        // Nếu không có Username, dùng FullName (không dấu) + Guid ngắn
-        string username = string.IsNullOrWhiteSpace(request.Username) 
-            ? Guid.NewGuid().ToString("N").Substring(0, 8) 
-            : request.Username;
-
         var newId = await _userService.RegisterAsync(
-            username, 
+            request.Username, 
+            request.Email, 
             request.FullName, 
-            request.EmbeddingFront, 
-            request.EmbeddingLeft, 
-            request.EmbeddingRight, 
-            request.MinioFront,
-            request.MinioLeft,
-            request.MinioRight
+            request.Role, 
+            request.KeycloakId,
+            request.CreatedBy
         );
         return Ok(new { success = true, userId = newId });
     }
 
-    /// <summary>
-    /// Xóa User.
-    /// DELETE /api/users/{id}
-    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _userService.DeleteAsync(id);
         if (!result)
-            return NotFound(new { success = false, message = $"Không tìm thấy User ID: {id}" });
+            return NotFound(new { success = false, message = "Không tìm thấy người dùng" });
 
-        return Ok(new { success = true, message = $"Đã xóa User ID: {id}" });
+        return Ok(new { success = true, message = "Đã vô hiệu hóa người dùng" });
     }
 }
 
-public class RegisterRequest
+public class UserRegisterRequest
 {
     public string Username { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
-    public float[] EmbeddingFront { get; set; } = Array.Empty<float>();
-    public float[] EmbeddingLeft { get; set; } = Array.Empty<float>();
-    public float[] EmbeddingRight { get; set; } = Array.Empty<float>();
-    public string MinioFront { get; set; } = string.Empty;
-    public string MinioLeft { get; set; } = string.Empty;
-    public string MinioRight { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? FullName { get; set; }
+    public string? Role { get; set; }
+    public Guid? KeycloakId { get; set; }
+    public string? CreatedBy { get; set; }
 }

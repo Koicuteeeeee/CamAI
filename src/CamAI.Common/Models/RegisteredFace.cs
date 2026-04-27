@@ -5,8 +5,8 @@ namespace CamAI.Common.Models;
 /// </summary>
 public class RegisteredFace
 {
-    /// <summary>ID người dùng.</summary>
-    public Guid UserId { get; set; }
+    /// <summary>ID của hồ sơ khuôn mặt.</summary>
+    public Guid ProfileId { get; set; }
 
     /// <summary>Tên đầy đủ.</summary>
     public string FullName { get; set; } = string.Empty;
@@ -28,4 +28,9 @@ public class RegisteredFace
 
     /// <summary>Đường dẫn tệp ảnh nghiêng phải trên MinIO.</summary>
     public string MinioRight { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public string? UpdatedBy { get; set; }
 }

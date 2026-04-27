@@ -13,8 +13,8 @@ public class AccessLogService : IAccessLogService
         _logRepo = logRepo;
     }
 
-    public async Task LogAccessAsync(Guid? userId, string? minioLogImage = null, string? deviceImpacted = null, string? recognitionStatus = null, double? confidenceScore = null)
-        => await _logRepo.InsertAsync(userId, minioLogImage, deviceImpacted, recognitionStatus, confidenceScore);
+    public async Task LogAccessAsync(Guid? profileId, string? fullName = null, string? minioLogImage = null, string? deviceImpacted = null, string? recognitionStatus = null, double? confidenceScore = null, string? createdBy = null)
+        => await _logRepo.InsertAsync(profileId, fullName, minioLogImage, deviceImpacted, recognitionStatus, confidenceScore, createdBy);
 
     public async Task<IEnumerable<AccessLogModel>> GetHistoryAsync(int page = 1, int pageSize = 20)
         => await _logRepo.GetHistoryAsync(page, pageSize);

@@ -1,12 +1,15 @@
 CREATE OR ALTER PROCEDURE [dbo].[sp_AccessLog_Insert]
-    @UserId UNIQUEIDENTIFIER,
-    @ActionTaken NVARCHAR(100),
-    @MinioLogImage NVARCHAR(255),
-    @DeviceImpacted NVARCHAR(100)
+    @ProfileId UNIQUEIDENTIFIER = NULL, -- Cho phép NULL cho người lạ
+    @FullName NVARCHAR(100) = NULL,
+    @RecognitionStatus NVARCHAR(20),
+    @Similarity FLOAT = NULL,
+    @MinioLogImage NVARCHAR(500) = NULL,
+    @DeviceImpacted NVARCHAR(100) = NULL,
+    @CreatedBy NVARCHAR(100) = 'AI Engine'
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO [dbo].[AccessLogs] ([UserId], [ActionTaken], [MinioLogImage], [DeviceImpacted], [LogTime])
-    VALUES (@UserId, @ActionTaken, @MinioLogImage, @DeviceImpacted, GETDATE());
+    INSERT INTO [dbo].[AccessLogs] ([ProfileId], [FullName], [RecognitionStatus], [Similarity], [MinioLogImage], [DeviceImpacted], [LogTime], [CreatedBy], [UpdatedBy])
+    VALUES (@ProfileId, @FullName, @RecognitionStatus, @Similarity, @MinioLogImage, @DeviceImpacted, GETDATE(), @CreatedBy, @CreatedBy);
 END
 GO

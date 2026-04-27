@@ -18,12 +18,12 @@ public class CameraEventRepository : ICameraEventRepository
 
     private IDbConnection CreateConnection() => new SqlConnection(_connectionString);
 
-    public async Task InsertAsync(Guid? cameraId, string? cameraName, string eventType, string description)
+    public async Task InsertAsync(Guid? cameraId, string? cameraName, string eventType, string description, string? createdBy = null)
     {
         using var conn = CreateConnection();
         await conn.ExecuteAsync(
             "sp_CameraEvent_Insert",
-            new { CameraId = cameraId, CameraName = cameraName, EventType = eventType, Description = description },
+            new { CameraId = cameraId, CameraName = cameraName, EventType = eventType, Description = description, CreatedBy = createdBy },
             commandType: CommandType.StoredProcedure
         );
     }

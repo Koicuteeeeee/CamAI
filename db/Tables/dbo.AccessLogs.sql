@@ -1,10 +1,16 @@
 CREATE TABLE [dbo].[AccessLogs] (
     [Id] UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     [LogTime] DATETIME NOT NULL DEFAULT GETDATE(),
-    [UserId] UNIQUEIDENTIFIER NULL,
-    [ActionTaken] NVARCHAR(100) NOT NULL,
-    [MinioLogImage] NVARCHAR(255) NULL,
+    [ProfileId] UNIQUEIDENTIFIER NULL,
+    [FullName] NVARCHAR(100) NULL,
+    [RecognitionStatus] NVARCHAR(20) NULL,
+    [Similarity] FLOAT NULL,
+    [MinioLogImage] NVARCHAR(500) NULL,
     [DeviceImpacted] NVARCHAR(100) NULL,
-    CONSTRAINT [FK_AccessLogs_Users] FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users]([Id]) ON DELETE SET NULL
+    [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
+    [CreatedBy] NVARCHAR(100) NULL,
+    [UpdatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
+    [UpdatedBy] NVARCHAR(100) NULL,
+    CONSTRAINT [FK_AccessLogs_FaceProfiles] FOREIGN KEY ([ProfileId]) REFERENCES [dbo].[FaceProfiles]([Id]) ON DELETE SET NULL
 );
 GO

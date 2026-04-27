@@ -1,0 +1,11 @@
+CREATE TABLE [dbo].[FaceProfiles] (
+    [Id] UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    [FullName] NVARCHAR(100) NOT NULL,
+    [ExternalCode] NVARCHAR(50) NULL,
+    [ProfileType] NVARCHAR(20) DEFAULT 'Resident',
+    [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
+    [CreatedBy] NVARCHAR(100) NULL,
+    [UpdatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
+    [UpdatedBy] NVARCHAR(100) NULL
+);
+GO

@@ -2,6 +2,7 @@ using CamAI.Service.AI.BLL.Interfaces;
 using CamAI.Service.AI.BLL.Services;
 using CamAI.Service.AI.DAL.Interfaces;
 using CamAI.Service.AI.DAL.Repositories;
+using CamAI.Service.AI.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +17,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// === AUTHENTICATION SERVICES ===
+builder.Services.AddHttpClient<IKeycloakAuthService, KeycloakAuthService>();
+builder.Services.AddTransient<AuthHeaderHandler>();
+
 // Connection
 builder.Services.AddHttpClient("CamAI_API", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5282/"); // Port của CamAI.API
-});
+})
+.AddHttpMessageHandler<AuthHeaderHandler>();
 
 // DAL - Repositories
 builder.Services.AddSingleton<ICameraRepository, CameraRepository>();

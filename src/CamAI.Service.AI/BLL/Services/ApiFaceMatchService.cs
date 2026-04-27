@@ -38,9 +38,9 @@ public class ApiFaceMatchService : IFaceMatchService
                     _registeredFaces.Clear();
                     foreach (var record in data)
                     {
-                        _registeredFaces[record.UserId] = new RegisteredFace
+                        _registeredFaces[record.ProfileId] = new RegisteredFace
                         {
-                            UserId = record.UserId,
+                            ProfileId = record.ProfileId,
                             FullName = record.FullName,
                             EmbeddingFront = record.EmbeddingFront,
                             EmbeddingLeft = record.EmbeddingLeft,
@@ -51,7 +51,7 @@ public class ApiFaceMatchService : IFaceMatchService
                         };
                     }
                 }
-                _logger.LogInformation("[MatchService] Da dong bo {Count} khuon mat (3 goc) tu API.", _registeredFaces.Count);
+                _logger.LogInformation("[MatchService] Da dong bo {Count} nhat ky khuon mat tu API.", _registeredFaces.Count);
             }
         }
         catch (Exception ex)
@@ -65,7 +65,7 @@ public class ApiFaceMatchService : IFaceMatchService
         var result = new FaceRecognitionResult
         {
             IsKnown = false,
-            UserId = Guid.Empty,
+            ProfileId = null,
             FullName = "Người lạ",
             Similarity = 0f
         };
@@ -75,12 +75,11 @@ public class ApiFaceMatchService : IFaceMatchService
         lock (_lock)
         {
             float maxSim = -1f;
-            Guid bestUserId = Guid.Empty;
+            Guid? bestProfileId = null;
             string bestName = "";
 
             foreach (var face in _registeredFaces.Values)
             {
-                // So khớp với cả 3 góc độ, lấy góc có độ tương đồng cao nhất
                 float simFront = CosineSimilarity(embedding, face.EmbeddingFront);
                 float simLeft = CosineSimilarity(embedding, face.EmbeddingLeft);
                 float simRight = CosineSimilarity(embedding, face.EmbeddingRight);
@@ -90,7 +89,7 @@ public class ApiFaceMatchService : IFaceMatchService
                 if (bestSim > maxSim)
                 {
                     maxSim = bestSim;
-                    bestUserId = face.UserId;
+                    bestProfileId = face.ProfileId;
                     bestName = face.FullName;
                 }
             }
@@ -98,14 +97,13 @@ public class ApiFaceMatchService : IFaceMatchService
             if (maxSim >= threshold)
             {
                 result.IsKnown = true;
-                result.UserId = bestUserId;
+                result.ProfileId = bestProfileId;
                 result.FullName = bestName;
                 result.Similarity = maxSim;
             }
             else
             {
                 result.Similarity = maxSim;
-                // _logger.LogWarning("Phát hiện người lạ! Gần giống nhất: {Name}, Sim = {Sim:F3}", bestName, maxSim);
             }
         }
         return result;
@@ -133,9 +131,8 @@ public class ApiFaceMatchService : IFaceMatchService
         }
     }
 
-    public bool Remove(Guid userId)
+    public bool Remove(Guid profileId)
     {
-        // TODO: Implement Delete in Repository if needed
         _logger.LogWarning("Remove not implemented via Repository yet.");
         return false;
     }

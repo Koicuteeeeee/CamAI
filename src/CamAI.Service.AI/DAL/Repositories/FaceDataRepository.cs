@@ -19,13 +19,13 @@ public class FaceDataRepository : IFaceDataRepository
     public async Task<List<UserFaceRecord>> GetAllFaceEmbeddingsAsync(CancellationToken ct = default)
     {
         var client = _httpClientFactory.CreateClient("CamAI_API");
-        var response = await client.GetFromJsonAsync<ApiFaceResponse>("api/users/faces", _jsonOptions, ct);
+        var response = await client.GetFromJsonAsync<ApiFaceResponse>("api/faceprofiles/faces", _jsonOptions, ct);
         return response?.Data ?? new List<UserFaceRecord>();
     }
 
     public async Task RegisterFaceAsync(RegisteredFace face, CancellationToken ct = default)
     {
         var client = _httpClientFactory.CreateClient("CamAI_API");
-        await client.PostAsJsonAsync("api/users/register", face, ct);
+        await client.PostAsJsonAsync("api/faceprofiles/register", face, ct);
     }
 }

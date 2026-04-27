@@ -129,7 +129,7 @@ public class FaceController : ControllerBase
                 faces = results.Select(r => new
                 {
                     r.IsKnown,
-                    r.UserId,
+                    r.ProfileId,
                     r.FullName,
                     similarity = Math.Round(r.Similarity, 3),
                     region = new { r.FaceRegion.X, r.FaceRegion.Y, r.FaceRegion.Width, r.FaceRegion.Height }
@@ -310,7 +310,7 @@ public class FaceController : ControllerBase
                 count = faces?.Count ?? -1,
                 users = faces?.Select(f => new
                 {
-                    f.UserId,
+                    f.ProfileId,
                     f.FullName,
                     embeddingSize = f.EmbeddingFront != null ? f.EmbeddingFront.Length : -1
                 }).ToList()
@@ -326,14 +326,14 @@ public class FaceController : ControllerBase
     /// Xóa người dùng khỏi hệ thống.
     /// DELETE /api/face/{userId}
     /// </summary>
-    [HttpDelete("{userId}")]
-    public IActionResult Delete(Guid userId)
+    [HttpDelete("{profileId}")]
+    public IActionResult Delete(Guid profileId)
     {
-        var removed = _matchService.Remove(userId);
+        var removed = _matchService.Remove(profileId);
         if (removed)
-            return Ok(new { success = true, message = $"Đã xóa người dùng ID: {userId}" });
+            return Ok(new { success = true, message = $"Đã xóa người dùng ID: {profileId}" });
 
-        return NotFound(new { success = false, message = $"Không tìm thấy người dùng ID: {userId}" });
+        return NotFound(new { success = false, message = $"Không tìm thấy người dùng ID: {profileId}" });
     }
 
     private Rect ClampRect(Rect rect, int maxWidth, int maxHeight)

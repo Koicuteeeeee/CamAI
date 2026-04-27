@@ -8,8 +8,8 @@ public class FaceRecognitionResult
     /// <summary>Có phải người quen không.</summary>
     public bool IsKnown { get; set; }
 
-    /// <summary>ID người dùng (null nếu là người lạ).</summary>
-    public Guid? UserId { get; set; }
+    /// <summary>ID của hồ sơ khuôn mặt (null nếu là người lạ).</summary>
+    public Guid? ProfileId { get; set; }
 
     /// <summary>Tên hiển thị.</summary>
     public string FullName { get; set; } = "Người lạ";

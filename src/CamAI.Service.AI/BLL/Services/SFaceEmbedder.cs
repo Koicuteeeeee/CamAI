@@ -30,8 +30,10 @@ public class SFaceEmbedder : IFaceEmbedder
     public float[] GetEmbedding(Mat faceImage)
     {
         if (faceImage == null || faceImage.Empty()) return Array.Empty<float>();
+        
+        using var enhanced = EnhanceImage(faceImage);
         using var resized = new Mat();
-        Cv2.Resize(faceImage, resized, new Size(_inputSize, _inputSize));
+        Cv2.Resize(enhanced, resized, new Size(_inputSize, _inputSize));
         var inputTensor = Preprocess(resized);
         return RunInference(inputTensor);
     }
@@ -46,8 +48,36 @@ public class SFaceEmbedder : IFaceEmbedder
         }
 
         using var aligned = AlignFace(frame, detection.Landmarks);
-        var inputTensor = Preprocess(aligned);
+        using var enhanced = EnhanceImage(aligned);
+        var inputTensor = Preprocess(enhanced);
         return RunInference(inputTensor);
+    }
+
+    private Mat EnhanceImage(Mat img)
+    {
+        // Sử dụng CLAHE để xử lý ngược sáng (Backlight Compensation)
+        // Chuyển sang hệ màu LAB để chỉ xử lý kênh độ sáng (L)
+        var lab = new Mat();
+        Cv2.CvtColor(img, lab, ColorConversionCodes.BGR2Lab);
+        
+        var channels = Cv2.Split(lab);
+        using (var clahe = Cv2.CreateCLAHE(clipLimit: 2.0, tileGridSize: new Size(8, 8)))
+        {
+            clahe.Apply(channels[0], channels[0]);
+        }
+        
+        var enhancedLab = new Mat();
+        Cv2.Merge(channels, enhancedLab);
+        
+        var result = new Mat();
+        Cv2.CvtColor(enhancedLab, result, ColorConversionCodes.Lab2BGR);
+        
+        // Giải phóng các channel
+        foreach (var c in channels) c.Dispose();
+        lab.Dispose();
+        enhancedLab.Dispose();
+        
+        return result;
     }
 
     private DenseTensor<float> Preprocess(Mat img)

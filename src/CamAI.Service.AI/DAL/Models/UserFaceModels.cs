@@ -5,7 +5,7 @@ namespace CamAI.Service.AI.DAL.Models;
 
 public class UserFaceRecord
 {
-    public Guid UserId { get; set; }
+    public Guid ProfileId { get; set; }
     public string FullName { get; set; } = string.Empty;
     public float[] EmbeddingFront { get; set; } = Array.Empty<float>();
     public float[] EmbeddingLeft { get; set; } = Array.Empty<float>();

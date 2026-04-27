@@ -10,7 +10,11 @@ BEGIN
         [CameraId] UNIQUEIDENTIFIER NULL,
         [CameraName] NVARCHAR(100) NULL,
         [EventType] NVARCHAR(50) NOT NULL, -- DISCONNECTED, CONNECTED, RECOVERY, ENROLL_START, ENROLL_COMPLETE
-        [Description] NVARCHAR(MAX) NOT NULL
+        [Description] NVARCHAR(MAX) NOT NULL,
+        [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
+        [CreatedBy] NVARCHAR(100) NULL,
+        [UpdatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
+        [UpdatedBy] NVARCHAR(100) NULL
     );
 END
 GO
@@ -20,11 +24,12 @@ CREATE OR ALTER PROCEDURE [dbo].[sp_CameraEvent_Insert]
     @CameraId UNIQUEIDENTIFIER = NULL,
     @CameraName NVARCHAR(100) = NULL,
     @EventType NVARCHAR(50),
-    @Description NVARCHAR(MAX)
+    @Description NVARCHAR(MAX),
+    @CreatedBy NVARCHAR(100) = 'Camera Service'
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO [dbo].[CameraEvents] ([CameraId], [CameraName], [EventType], [Description])
-    VALUES (@CameraId, @CameraName, @EventType, @Description);
+    INSERT INTO [dbo].[CameraEvents] ([CameraId], [CameraName], [EventType], [Description], [CreatedBy], [UpdatedBy])
+    VALUES (@CameraId, @CameraName, @EventType, @Description, @CreatedBy, @CreatedBy);
 END
 GO
