@@ -1,6 +1,8 @@
 using CamAI.API.BLL.Interfaces;
+using CamAI.API.BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace CamAI.API.API.Controllers;
 
@@ -9,10 +11,12 @@ namespace CamAI.API.API.Controllers;
 public class AccessLogsController : ControllerBase
 {
     private readonly IAccessLogService _logService;
+    private readonly AccessLogEventBus _eventBus;
 
-    public AccessLogsController(IAccessLogService logService)
+    public AccessLogsController(IAccessLogService logService, AccessLogEventBus eventBus)
     {
         _logService = logService;
+        _eventBus = eventBus;
     }
 
     /// <summary>
@@ -28,6 +32,41 @@ public class AccessLogsController : ControllerBase
     }
 
     /// <summary>
+    /// Stream event realtime khi có access log mới (SSE).
+    /// GET /api/accesslogs/stream
+    /// </summary>
+    [AllowAnonymous]
+    [HttpGet("stream")]
+    public async Task Stream(CancellationToken ct)
+    {
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("Connection", "keep-alive");
+
+        var channel = _eventBus.Subscribe();
+        try
+        {
+            await Response.WriteAsync("event: ready\ndata: connected\n\n", ct);
+            await Response.Body.FlushAsync(ct);
+
+            await foreach (var evt in channel.Reader.ReadAllAsync(ct))
+            {
+                var payload = JsonSerializer.Serialize(evt);
+                await Response.WriteAsync($"event: access-log\ndata: {payload}\n\n", ct);
+                await Response.Body.FlushAsync(ct);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Client disconnected.
+        }
+        finally
+        {
+            _eventBus.Unsubscribe(channel);
+        }
+    }
+
+    /// <summary>
     /// Ghi một bản ghi nhật ký (AI Engine gọi endpoint này).
     /// POST /api/accesslogs
     /// </summary>
@@ -35,6 +74,15 @@ public class AccessLogsController : ControllerBase
     public async Task<IActionResult> Insert([FromBody] AccessLogRequest request)
     {
         await _logService.LogAccessAsync(request.ProfileId, request.FullName, request.MinioLogImage, request.DeviceImpacted, request.RecognitionStatus, request.ConfidenceScore, request.CreatedBy);
+
+        _eventBus.Publish(new AccessLogEvent(
+            request.ProfileId,
+            request.FullName,
+            request.RecognitionStatus,
+            request.ConfidenceScore,
+            DateTime.UtcNow
+        ));
+
         return Ok(new { success = true, message = "Đã ghi nhật ký" });
     }
 }

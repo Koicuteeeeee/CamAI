@@ -68,9 +68,10 @@ public class FaceController : ControllerBase
             req.FullName,
             progress = new
             {
-                front = req.EmbeddingFront != null,
-                left = req.EmbeddingLeft != null,
-                right = req.EmbeddingRight != null
+                currentAngles = req.CapturedAngles.Count,
+                minRequired = req.MinAnglesRequired,
+                maxAllowed = req.MaxAngles,
+                isComplete = req.IsComplete
             }
         });
     }

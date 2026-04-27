@@ -42,7 +42,7 @@ Dùng để tối ưu độ trễ (Latency) mà không cần mở file thủ cô
     ```
 * **Tab 2 - Đẩy luồng từ Camera Imou vào Server:**
     ```bash
-    ffmpeg -re -rtsp_transport tcp -i "rtsp://admin:L2BBD091@192.168.1.200:554/cam/realmonitor?channel=1&subtype=1" -c copy -f rtsp rtsp://localhost:8554/mystream
+    ffmpeg -re -rtsp_transport tcp -i "rtsp://admin:L2BBD091@192.168.1.200:554/cam/realmonitor?channel=1&subtype=0" -c copy -f rtsp rtsp://localhost:8554/mystream
     ```
     *(Lưu ý: Nếu muốn siêu mượt, thêm `-tune zerolatency` vào trước `-f rtsp`).*
 
@@ -68,7 +68,7 @@ Dùng IP Tailscale của ông (`100.120.105.33`) để xem từ xa.
    termux-wake-lock
    killall mediamtx ffmpeg
    tmux new-session -d -s stream './mediamtx'
-   tmux split-window -h 'ffmpeg -re -rtsp_transport tcp -i "rtsp://admin:L2BBD091@192.168.1.200:554/cam/realmonitor?channel=1&subtype=1" -c copy -f rtsp rtsp://localhost:8554/mystream'
+   tmux split-window -h 'ffmpeg -re -rtsp_transport tcp -i "rtsp://admin:L2BBD091@192.168.1.200:554/cam/realmonitor?channel=1&subtype=0" -c copy -f rtsp rtsp://localhost:8554/mystream'
    tmux attach-session -t stream
    ```
 3. Lưu lại và gõ: `chmod +x chay.sh`

@@ -7,7 +7,10 @@ Hệ thống được thiết kế theo kiến trúc Microservices phân tán, t
 ### 1.1. Data API Service (CamAI.API)
 *   **Trách nhiệm:** Lưu trữ tập trung Metadata, Embeddings và Access Logs.
 *   **Cơ chế:** Sử dụng Dapper + Stored Procedures để đảm bảo tính toàn vẹn dữ liệu.
-*   **Database:** SQL Server phân tách bảng `Users` và `UserFaces` để hỗ trợ đa mẫu mã khuôn mặt trên mỗi người dùng.
+*   **Database:** SQL Server theo mô hình **Hybrid Identity**:
+    *   Bảng `Users` — Tài khoản CMS, liên kết Keycloak (quản trị hệ thống).
+    *   Bảng `FaceProfiles` + `UserFaces` — Hồ sơ nhận diện khuôn mặt (AI Engine).
+    *   Bảng `AccessLogs` — Nhật ký nhận diện, liên kết FK → `FaceProfiles`.
 
 ### 1.2. AI Engine Service (CamAI.Service.AI)
 *   **Trách nhiệm:** Thu thập video RTSP, xử lý Object Detection (YuNet) và Face Recognition (SFace).
@@ -44,9 +47,24 @@ Hệ thống hợp nhất toàn bộ tài nguyên hình ảnh vào Bucket `faces
 
 ---
 
-## 4. Technical Stack
-*   **Core:** .NET 9
-*   **Computer Vision:** OpenCvSharp4, ONNX Runtime (CPU/GPU acceleration).
-*   **Database:** SQL Server (Dapper).
-*   **Storage:** MinIO SDK (S3 Interface).
-*   **Connectivity:** Tailscale VPN (Connect to remote IP Cameras).
+---
+
+## 4. Chiến lược Lưu trữ Bằng chứng (Evidence Cropping)
+
+Để Dashboard hiển thị rõ nét và tiết kiệm băng thông, hệ thống áp dụng cơ chế:
+- **Smart Cropping:** Thay vì lưu toàn bộ khung hình camera (gây mờ khi xem lại), AI tự động cắt chính xác vùng khuôn mặt từ ảnh gốc Full HD.
+- **Context Padding:** Vùng cắt được mở rộng thêm 25% các hướng để lấy thêm context (tóc, vai, trang phục), giúp ảnh có tỉ lệ cân đối.
+- **MinIO Hierarchy:** Toàn bộ ảnh crop được lưu vào Bucket `faces` với cấu trúc `logs/{type}/yyyy/MM/dd/{guid}.jpg`.
+
+## 5. Danh mục Công nghệ (Technical Stack)
+
+| Thành phần | Công nghệ |
+| :--- | :--- |
+| **AI Engine** | .NET 9, OpenCvSharp4, OnnxRuntime |
+| **Backend API** | ASP.NET Core Web API, EF Core / Dapper |
+| **Database** | SQL Server (Lưu Metadata & Embedding) |
+| **Identity** | Keycloak (Quản lý User CMS) |
+| **Frontend** | Angular 19+, Tailwind CSS (Dashboard Dashboard) |
+| **Storage** | MinIO (Object Storage cho ảnh) |
+| **Media** | MediaMTX (RTSP to MJPEG / HLS Gateway) |
+| **Network** | Tailscale (Kết nối Camera từ xa qua WireGuard) |

@@ -1,16 +1,29 @@
 using CamAI.API.BLL.Interfaces;
 using CamAI.API.DAL.Interfaces;
 using CamAI.API.DAL.Models;
+using Minio;
+using Minio.DataModel.Args;
 
 namespace CamAI.API.BLL.Services;
 
 public class FaceProfileService : IFaceProfileService
 {
     private readonly IFaceProfileRepository _profileRepo;
+    private readonly IMinioClient _minioClient;
+    private const string FacesBucket = "faces";
 
-    public FaceProfileService(IFaceProfileRepository profileRepo)
+    public FaceProfileService(IFaceProfileRepository profileRepo, IConfiguration configuration)
     {
         _profileRepo = profileRepo;
+
+        var endpoint = configuration["Minio:Endpoint"] ?? "localhost:9000";
+        var accessKey = configuration["Minio:AccessKey"] ?? "admin";
+        var secretKey = configuration["Minio:SecretKey"] ?? "password123";
+
+        _minioClient = new MinioClient()
+            .WithEndpoint(endpoint)
+            .WithCredentials(accessKey, secretKey)
+            .Build();
     }
 
     public async Task<IEnumerable<FaceProfileModel>> GetAllAsync()
@@ -27,7 +40,7 @@ public class FaceProfileService : IFaceProfileService
     public async Task<List<FaceRecord>> GetAllFaceRecordsAsync()
     {
         var faces = await _profileRepo.GetAllFaceEmbeddingsAsync();
-        return faces.Select(f => new FaceRecord
+        var records = faces.Select(f => new FaceRecord
         {
             ProfileId = f.ProfileId,
             FullName = f.FullName,
@@ -38,6 +51,50 @@ public class FaceProfileService : IFaceProfileService
             MinioLeft = f.MinioLeft,
             MinioRight = f.MinioRight
         }).ToList();
+
+        foreach (var record in records)
+        {
+            record.MinioFront = await ToPresignedUrlOrOriginalAsync(record.MinioFront);
+            record.MinioLeft = await ToPresignedUrlOrOriginalAsync(record.MinioLeft);
+            record.MinioRight = await ToPresignedUrlOrOriginalAsync(record.MinioRight);
+        }
+
+        return records;
+    }
+
+    public async Task<List<FaceEmbeddingRecordDto>> GetAllFaceEmbeddingsV2Async()
+    {
+        var records = await _profileRepo.GetAllFaceEmbeddingsV2Async();
+        var dtos = records.Select(r => new FaceEmbeddingRecordDto
+        {
+            Id = r.Id,
+            ProfileId = r.ProfileId,
+            FullName = r.FullName,
+            AngleLabel = r.AngleLabel,
+            AngleDegree = r.AngleDegree,
+            Embedding = BytesToEmbedding(r.Embedding),
+            MinioImageUrl = r.MinioImageUrl,
+            CaptureQuality = r.CaptureQuality
+        }).ToList();
+
+        foreach (var dto in dtos)
+        {
+            if (!string.IsNullOrEmpty(dto.MinioImageUrl))
+                dto.MinioImageUrl = await ToPresignedUrlOrOriginalAsync(dto.MinioImageUrl);
+        }
+
+        return dtos;
+    }
+
+    public async Task<Guid> RegisterProfileV2Async(string fullName, string? externalCode = null, string? profileType = "Resident", string? createdBy = null)
+    {
+        return await _profileRepo.RegisterProfileV2Async(fullName, externalCode, profileType, createdBy);
+    }
+
+    public async Task<Guid> AddEmbeddingAsync(Guid profileId, string angleLabel, float? angleDegree, float[] embedding, string? minioImageUrl, float? captureQuality, string? createdBy = null)
+    {
+        byte[] embBytes = EmbeddingToBytes(embedding);
+        return await _profileRepo.AddEmbeddingAsync(profileId, angleLabel, angleDegree, embBytes, minioImageUrl, captureQuality, createdBy);
     }
 
     public async Task<bool> DeleteAsync(Guid profileId)
@@ -55,5 +112,38 @@ public class FaceProfileService : IFaceProfileService
         float[] embedding = new float[bytes.Length / sizeof(float)];
         Buffer.BlockCopy(bytes, 0, embedding, 0, bytes.Length);
         return embedding;
+    }
+
+    private async Task<string> ToPresignedUrlOrOriginalAsync(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        if (Uri.TryCreate(value, UriKind.Absolute, out _))
+        {
+            return value;
+        }
+
+        var objectName = value.Trim().TrimStart('/');
+        if (objectName.StartsWith("faces/", StringComparison.OrdinalIgnoreCase))
+        {
+            objectName = objectName["faces/".Length..];
+        }
+
+        try
+        {
+            return await _minioClient.PresignedGetObjectAsync(
+                new PresignedGetObjectArgs()
+                    .WithBucket(FacesBucket)
+                    .WithObject(objectName)
+                    .WithExpiry(60 * 60)
+            );
+        }
+        catch
+        {
+            return value;
+        }
     }
 }

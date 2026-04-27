@@ -52,7 +52,7 @@ builder.Services.AddSingleton<IFaceEmbedder>(sp =>
     return new SFaceEmbedder(modelFile, logger);
 });
 
-builder.Services.AddSingleton<IFaceMatchService, ApiFaceMatchService>();
+builder.Services.AddSingleton<IFaceMatchService, ApiFaceMatchServiceV2>();
 
 // Thêm dịch vụ đăng ký từ stream
 builder.Services.AddSingleton<IEnrollmentService, EnrollmentService>();

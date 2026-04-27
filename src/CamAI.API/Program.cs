@@ -88,6 +88,7 @@ builder.Services.AddScoped<IFaceProfileService, FaceProfileService>();
 builder.Services.AddScoped<IAccessLogService, AccessLogService>();
 builder.Services.AddScoped<ICameraService, CameraService>();
 builder.Services.AddScoped<ICameraEventService, CameraEventService>();
+builder.Services.AddSingleton<AccessLogEventBus>();
 
 // CORS
 builder.Services.AddCors(options =>

@@ -32,8 +32,9 @@ public class YuNetFaceDetector : IFaceDetector
         var results = new List<FaceDetectionResult>();
         if (frame.Empty()) return results;
 
-        // Giảm maxSize xuống 720 để tăng tốc độ xử lý, tránh trễ luồng
-        int maxSize = 720;
+        // Tăng maxSize lên 1080 để nhận diện được khuôn mặt ở xa tốt hơn (ảnh nét hơn)
+        // Lưu ý: CPU/RAM sẽ tiêu thụ cao hơn một chút so với mốc 720
+        int maxSize = 1080;
         float scale = 1.0f;
         Mat detectFrame = frame;
 

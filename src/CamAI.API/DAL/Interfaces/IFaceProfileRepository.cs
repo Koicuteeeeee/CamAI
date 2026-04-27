@@ -11,4 +11,9 @@ public interface IFaceProfileRepository
     Task<Guid> RegisterAsync(string fullName, string? externalCode, string? profileType, byte[] embeddingFront, byte[] embeddingLeft, byte[] embeddingRight, string minioFront, string minioLeft, string minioRight, string? createdBy = null);
     Task<IEnumerable<UserFaceModel>> GetAllFaceEmbeddingsAsync();
     Task<bool> DeleteAsync(Guid profileId);
+
+    // V2 (N góc độ)
+    Task<IEnumerable<FaceEmbeddingModel>> GetAllFaceEmbeddingsV2Async();
+    Task<Guid> RegisterProfileV2Async(string fullName, string? externalCode = null, string? profileType = "Resident", string? createdBy = null);
+    Task<Guid> AddEmbeddingAsync(Guid profileId, string angleLabel, float? angleDegree, byte[] embedding, string? minioImageUrl, float? captureQuality, string? createdBy = null);
 }

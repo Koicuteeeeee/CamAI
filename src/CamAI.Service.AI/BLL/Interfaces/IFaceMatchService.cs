@@ -12,4 +12,7 @@ public interface IFaceMatchService
     Task RegisterAsync(RegisteredFace face);
     List<RegisteredFace> GetAllRegistered();
     bool Remove(Guid profileId);
+    
+    // V2
+    Task RegisterProfileV2Async(CamAI.Service.AI.DAL.Models.EnrollmentRequestV2 enrollReq);
 }

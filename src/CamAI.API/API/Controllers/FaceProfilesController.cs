@@ -55,6 +55,60 @@ public class FaceProfilesController : ControllerBase
 
         return Ok(new { success = true, message = "Đã xóa hồ sơ" });
     }
+
+    // --- V2 Endpoints ---
+
+    [HttpGet("faces-v2")]
+    public async Task<IActionResult> GetAllFacesV2()
+    {
+        var faces = await _profileService.GetAllFaceEmbeddingsV2Async();
+        return Ok(new { success = true, count = faces.Count, data = faces });
+    }
+
+    [HttpPost("register-v2")]
+    public async Task<IActionResult> RegisterV2([FromBody] FaceProfileRegisterRequestV2 request)
+    {
+        var newId = await _profileService.RegisterProfileV2Async(
+            request.FullName,
+            request.ExternalCode,
+            request.ProfileType,
+            request.CreatedBy
+        );
+        return Ok(new { success = true, profileId = newId });
+    }
+
+    [HttpPost("{profileId}/embeddings")]
+    public async Task<IActionResult> AddEmbedding(Guid profileId, [FromBody] AddFaceEmbeddingRequest request)
+    {
+        var newId = await _profileService.AddEmbeddingAsync(
+            profileId,
+            request.AngleLabel,
+            request.AngleDegree,
+            request.Embedding,
+            request.MinioImageUrl,
+            request.CaptureQuality,
+            request.CreatedBy
+        );
+        return Ok(new { success = true, embeddingId = newId });
+    }
+}
+
+public class FaceProfileRegisterRequestV2
+{
+    public string FullName { get; set; } = string.Empty;
+    public string? ExternalCode { get; set; }
+    public string? ProfileType { get; set; }
+    public string? CreatedBy { get; set; }
+}
+
+public class AddFaceEmbeddingRequest
+{
+    public string AngleLabel { get; set; } = string.Empty;
+    public float? AngleDegree { get; set; }
+    public float[] Embedding { get; set; } = Array.Empty<float>();
+    public string? MinioImageUrl { get; set; }
+    public float? CaptureQuality { get; set; }
+    public string? CreatedBy { get; set; }
 }
 
 public class FaceProfileRegisterRequest

@@ -15,12 +15,14 @@ public class ApiFaceMatchService : IFaceMatchService
     private readonly ILogger<ApiFaceMatchService> _logger;
     private Dictionary<Guid, RegisteredFace> _registeredFaces = new();
     private readonly object _lock = new();
+    private readonly PeriodicTimer _syncTimer = new(TimeSpan.FromMinutes(1));
 
     public ApiFaceMatchService(IFaceDataRepository faceRepo, ILogger<ApiFaceMatchService> logger)
     {
         _faceRepo = faceRepo;
         _logger = logger;
         _ = SyncWithApiAsync();
+        _ = RunPeriodicSyncAsync();
     }
 
     /// <summary>
@@ -149,5 +151,25 @@ public class ApiFaceMatchService : IFaceMatchService
         }
         float denominator = MathF.Sqrt(normA) * MathF.Sqrt(normB);
         return denominator > 0 ? dot / denominator : 0;
+    }
+
+    private async Task RunPeriodicSyncAsync()
+    {
+        try
+        {
+            while (await _syncTimer.WaitForNextTickAsync())
+            {
+                await SyncWithApiAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[MatchService] Periodic sync stopped unexpectedly.");
+        }
+    }
+
+    public async Task RegisterProfileV2Async(EnrollmentRequestV2 enrollReq)
+    {
+        throw new NotImplementedException();
     }
 }

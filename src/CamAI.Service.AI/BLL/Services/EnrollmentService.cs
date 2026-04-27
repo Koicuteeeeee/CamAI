@@ -8,29 +8,32 @@ namespace CamAI.Service.AI.BLL.Services;
 
 public class EnrollmentService : IEnrollmentService
 {
-    private EnrollmentRequest? _currentRequest;
+    private EnrollmentRequestV2? _currentRequest;
     private readonly object _lock = new();
     private readonly ILogger<EnrollmentService> _logger;
+    private const double MIN_ANGLE_DIFF = 15.0; // Ít nhất 15 độ chênh lệch để coi là góc mới
 
     public EnrollmentService(ILogger<EnrollmentService> logger)
     {
         _logger = logger;
     }
 
-    public void StartEnrollment(string fullName)
+    public void StartEnrollment(string fullName, int minAnglesRequired = 5, int maxAngles = 10)
     {
         lock (_lock)
         {
-            _currentRequest = new EnrollmentRequest
+            _currentRequest = new EnrollmentRequestV2
             {
                 FullName = fullName,
-                StartTime = DateTime.Now
+                StartTime = DateTime.Now,
+                MinAnglesRequired = minAnglesRequired,
+                MaxAngles = maxAngles
             };
-            _logger.LogInformation("Bắt đầu quá trình đăng ký khuôn mặt cho: {Name}", fullName);
+            _logger.LogInformation("Bắt đầu đăng ký liên tục (Max {Max}) cho: {Name}", maxAngles, fullName);
         }
     }
 
-    public EnrollmentRequest? GetCurrentRequest() => _currentRequest;
+    public EnrollmentRequestV2? GetCurrentRequest() => _currentRequest;
 
     public void ClearRequest()
     {
@@ -40,31 +43,47 @@ public class EnrollmentService : IEnrollmentService
         }
     }
 
-    public bool UpdateEmbedding(float[] embedding, string angle, byte[] image)
+    public bool TryAddAngle(float[] embedding, double angleDegree, byte[] image, float quality)
     {
         lock (_lock)
         {
-            if (_currentRequest == null) return false;
+            if (_currentRequest == null || _currentRequest.IsFull) return false;
 
-            bool updated = false;
-            switch (angle.ToLower())
+            // Kiểm tra xem góc này đã trùng với góc nào chưa (cách nhau >= 15 độ)
+            bool isNewAngle = true;
+            foreach (var captured in _currentRequest.CapturedAngles)
             {
-                case "front":
-                    if (_currentRequest.EmbeddingFront == null) { _currentRequest.EmbeddingFront = embedding; _currentRequest.ImageFront = image; updated = true; }
+                if (Math.Abs(captured.AngleDegree - angleDegree) < MIN_ANGLE_DIFF)
+                {
+                    // Nếu trùng góc nhưng chất lượng (quality/confidence) tốt hơn thì ghi đè
+                    if (quality > captured.Quality)
+                    {
+                        captured.Embedding = embedding;
+                        captured.Image = image;
+                        captured.Quality = quality;
+                        _logger.LogInformation("Cập nhật lại góc {Deg} độ vì nháy được ảnh nét hơn ({Q})", (int)angleDegree, quality);
+                        return true; 
+                    }
+                    isNewAngle = false;
                     break;
-                case "left":
-                    if (_currentRequest.EmbeddingLeft == null) { _currentRequest.EmbeddingLeft = embedding; _currentRequest.ImageLeft = image; updated = true; }
-                    break;
-                case "right":
-                    if (_currentRequest.EmbeddingRight == null) { _currentRequest.EmbeddingRight = embedding; _currentRequest.ImageRight = image; updated = true; }
-                    break;
+                }
             }
 
-            if (updated)
+            if (isNewAngle)
             {
-                _logger.LogInformation("Đã thu thập góc {Angle} cho {Name}", angle, _currentRequest.FullName);
+                _currentRequest.CapturedAngles.Add(new CapturedAngle
+                {
+                    AngleLabel = $"angle_{(int)angleDegree}",
+                    AngleDegree = angleDegree,
+                    Embedding = embedding,
+                    Image = image,
+                    Quality = quality
+                });
+                _logger.LogInformation("Đã thêm góc mới {AngleLabel} ({Q}). Tổng góc: {C}/{Max}", $"angle_{(int)angleDegree}", quality, _currentRequest.CapturedAngles.Count, _currentRequest.MaxAngles);
+                return true;
             }
-            return updated;
+
+            return false;
         }
     }
 }

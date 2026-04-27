@@ -1,61 +1,133 @@
 <div class="flex flex-col h-screen bg-gray-100">
   <!-- Top Bar -->
-  <header class="bg-white border-b px-4 py-2 flex items-center justify-between">
-    <div class="flex items-center gap-4">
-      <button class="flex items-center text-gray-600 hover:text-emerald-700">
-        <lucide-icon [name]="BackIcon" class="w-5 h-5 mr-1"></lucide-icon>
-        Quay lại
-      </button>
-      <div class="flex items-center gap-2">
-        <span class="bg-[#065F46] text-white px-3 py-1 rounded text-sm font-semibold">GIÁM SÁT AN NINH AI</span>
-        <span class="text-gray-500 text-sm">• CamAI Core Engine v1.0</span>
+  <header class="bg-white border-b px-6 py-3 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-3">
+        <div class="bg-emerald-700 p-2 rounded-lg text-white">
+          <lucide-icon [name]="CameraIcon" class="w-6 h-6"></lucide-icon>
+        </div>
+        <div>
+          <h1 class="text-emerald-900 font-bold text-lg leading-none">CamAI CMS</h1>
+          <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Security Core v1.0</p>
+        </div>
       </div>
+      <nav class="hidden md:flex items-center gap-3 border-l pl-6 ml-2">
+        <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-100 cursor-default">DASHBOARD</span>
+        <button [routerLink]="['/register-face']" class="text-gray-500 hover:text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 hover:bg-emerald-50 border border-transparent hover:border-emerald-100">
+          <lucide-icon [name]="UserIcon" class="w-3 h-3"></lucide-icon>
+          ĐĂNG KÝ KHUÔN MẶT
+        </button>
+      </nav>
     </div>
-    <div class="flex items-center gap-2">
-      <button (click)="refreshLogs()" class="flex items-center px-3 py-1 border rounded hover:bg-gray-50 text-sm">
-        <lucide-icon [name]="RefreshIcon" class="w-4 h-4 mr-2"></lucide-icon>
-        Làm mới
-      </button>
-      <button class="flex items-center px-3 py-1 border rounded hover:bg-gray-50 text-sm">
-        <lucide-icon [name]="SettingsIcon" class="w-4 h-4 mr-2"></lucide-icon>
-        Cài đặt
-      </button>
+
+    <div class="flex items-center gap-6">
+      <!-- Connection Status -->
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors"
+           [ngClass]="streamConnected() ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700'">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                [ngClass]="streamConnected() ? 'bg-emerald-400' : 'bg-red-400'"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2"
+                [ngClass]="streamConnected() ? 'bg-emerald-500' : 'bg-red-500'"></span>
+        </span>
+        <span class="text-[11px] font-bold uppercase tracking-tight">{{ streamConnected() ? 'Realtime Connected' : 'Stream Offline' }}</span>
+      </div>
+
+      <!-- User Profile & Logout -->
+      <div class="flex items-center gap-4 border-l pl-6">
+        <div class="text-right hidden sm:block">
+          <p class="text-xs font-bold text-gray-800 leading-none mb-1">{{userName()}}</p>
+          <p class="text-[10px] text-gray-500 leading-none truncate max-w-[150px]">{{userEmail()}}</p>
+        </div>
+        <div class="h-9 w-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 border border-emerald-200 shadow-inner">
+          <lucide-icon [name]="UserIcon" class="w-5 h-5"></lucide-icon>
+        </div>
+        <button (click)="logout()" 
+                class="flex items-center justify-center p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm"
+                title="Đăng xuất">
+          <lucide-icon [name]="LogoutIcon" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
     </div>
   </header>
 
   <div class="flex flex-1 overflow-hidden">
     <!-- Left Sidebar: Detections -->
-    <aside class="w-80 bg-white border-r overflow-y-auto p-4 flex flex-col gap-4">
+    <aside class="w-96 bg-white border-r overflow-y-auto p-4 flex flex-col gap-4">
       <div class="flex justify-between items-end mb-2">
         <h2 class="text-[#065F46] font-bold text-lg leading-tight uppercase">Dòng sự kiện</h2>
         <span class="text-xs text-gray-500">Log: {{detections().length}}</span>
       </div>
       <p class="text-[10px] text-gray-400 mb-4">Lịch sử nhận diện từ các Camera AI</p>
 
-      <div *ngFor="let d of detections()" class="border border-red-200 rounded-lg p-3 bg-red-50/10 mb-4 relative overflow-hidden" 
-           [ngClass]="{'border-emerald-200 bg-emerald-50/10': d.status === 'approved'}">
-        <div class="flex gap-2">
-          <img [src]="d.image" class="w-20 h-24 object-cover rounded shadow" alt="Live">
-          <img [src]="d.regImage" class="w-20 h-24 object-cover rounded shadow" alt="Reg">
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-start">
-              <span class="font-bold text-gray-800 text-sm truncate">{{d.name}}</span>
-              <span class="bg-red-600 text-white text-[10px] px-1 rounded" [ngClass]="{'bg-emerald-600': d.status === 'approved'}">{{d.confidence}}%</span>
+      <div *ngFor="let d of detections()" 
+           class="group relative rounded-xl border p-4 shadow-sm transition-all duration-300 hover:shadow-md"
+           [ngClass]="d.status === 'approved' ? 'border-emerald-200 bg-gradient-to-br from-white to-emerald-50/50' : 'border-red-200 bg-gradient-to-br from-white to-red-50/50'">
+        
+        <!-- Status Indicator Strip -->
+        <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
+             [ngClass]="d.status === 'approved' ? 'bg-emerald-500' : 'bg-red-500'"></div>
+
+        <div class="flex gap-4">
+          <!-- Cột Trái: Media (Avatars) -->
+          <div class="relative shrink-0">
+            <!-- Ảnh Live (lớn) -->
+            <div class="h-[100px] w-[86px] overflow-hidden rounded-lg border shadow-sm"
+                 [ngClass]="d.status === 'approved' ? 'border-emerald-200' : 'border-red-200'">
+              <img [src]="d.image" (error)="onImageError($event, liveFallbackImage)"
+                   class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Live">
             </div>
-            <p class="text-[10px] text-gray-500">P.Ban: {{d.department}}</p>
-            <p class="text-[10px] font-semibold" [ngClass]="d.type === 'Employee' ? 'text-emerald-800' : 'text-orange-600'">
-              {{d.type === 'Employee' ? 'Nhân viên' : 'Đối tượng lạ'}}
-            </p>
-            <p class="text-[10px] text-gray-400 mt-1">{{d.time}}</p>
-            <p class="text-[8px] text-gray-500 uppercase leading-none mt-1">{{d.location}}</p>
-            <span class="text-[10px] font-bold uppercase mt-2 block" [ngClass]="d.status === 'denied' ? 'text-red-500' : 'text-emerald-500'">
-               {{d.status === 'denied' ? '⚠ CẢNH BÁO' : '✓ HỢP LỆ'}}
-            </span>
+            <!-- Ảnh ĐK (Nhỏ, Overlap) -->
+            <div class="absolute -right-3 -bottom-2 h-12 w-12 overflow-hidden rounded-full border-2 border-white shadow-md">
+              <img [src]="d.regImage" (error)="onImageError($event, registeredFallbackImage)"
+                   class="h-full w-full object-cover" alt="Registered">
+            </div>
           </div>
-        </div>
-        <div class="flex mt-3 gap-2">
-          <button class="flex-1 bg-[#065F46] text-white text-[10px] py-1 rounded">Live</button>
-          <button class="flex-1 bg-gray-500 text-white text-[10px] py-1 rounded">Ảnh ĐK</button>
+
+          <!-- Cột Phải: Information -->
+          <div class="flex flex-1 flex-col py-1 min-w-0">
+            
+            <!-- Header: Name & Confidence -->
+            <div class="flex items-start justify-between gap-2 mb-1">
+              <h3 class="truncate text-sm font-bold text-gray-800" [title]="d.name">{{d.name}}</h3>
+              <span class="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                    [ngClass]="d.status === 'approved' ? 'bg-emerald-500' : 'bg-red-500'">
+                {{d.confidence}}%
+              </span>
+            </div>
+
+            <!-- Role / Type Label -->
+            <div class="mb-3 flex items-center gap-1.5">
+              <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold tracking-wide"
+                    [ngClass]="d.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'">
+                {{d.type === 'Employee' ? 'NHÂN VIÊN' : 'NGƯỜI LẠ'}}
+              </span>
+              <span *ngIf="d.department && d.type === 'Employee'" class="truncate text-[11px] text-gray-500">
+                • {{d.department}}
+              </span>
+            </div>
+
+            <div class="mt-auto space-y-1.5 border-t border-gray-100 pt-2.5">
+              <!-- Meta: Location -->
+              <div class="flex items-center text-[10px] text-gray-500">
+                <lucide-icon [name]="CameraIcon" class="mr-1.5 h-3 w-3 opacity-70"></lucide-icon>
+                <span class="truncate uppercase tracking-wider">{{d.location}}</span>
+              </div>
+              
+              <!-- Meta: Time & Status -->
+              <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center font-medium text-gray-600">
+                  <span class="mr-1 h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                  {{d.time}}
+                </div>
+                <div class="font-bold uppercase tracking-wider text-[10px]"
+                     [ngClass]="d.status === 'approved' ? 'text-emerald-600' : 'text-red-500'">
+                   {{d.status === 'denied' ? '⚠ CẢNH BÁO' : '✓ HỢP LỆ'}}
+                </div>
+              </div>
+            </div>
+            
+          </div>
         </div>
       </div>
     </aside>
