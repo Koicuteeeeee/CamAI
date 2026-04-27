@@ -1,15 +1,11 @@
 definition                                                                                                                                                                                                                                                      
-CREATE   PROCEDURE [dbo].[sp_FaceEmbedding_GetAll]
+CREATE   PROCEDURE [dbo].[sp_SystemEvent_Insert]
+    @Level NVARCHAR(20),
+    @Source NVARCHAR(100),
+    @Message NVARCHAR(MAX),
+    @Exception NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT 
-        e.Id,
-        e.ProfileId,
-        p.FullName,
-        e.AngleLabel,
-        e.AngleDegree,
-        e.Embedding,
-        e.MinioImageUrl,
-        e.CaptureQ
+    INSERT INTO [dbo].
 GO

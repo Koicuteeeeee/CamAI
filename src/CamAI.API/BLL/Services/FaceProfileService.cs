@@ -31,32 +31,39 @@ public class FaceProfileService : IFaceProfileService
 
     public async Task<Guid> RegisterAsync(string fullName, float[] embeddingFront, float[] embeddingLeft, float[] embeddingRight, string minioFront, string minioLeft, string minioRight, string? externalCode = null, string? profileType = "Resident", string? createdBy = null)
     {
-        byte[] frontBytes = EmbeddingToBytes(embeddingFront);
-        byte[] leftBytes = EmbeddingToBytes(embeddingLeft);
-        byte[] rightBytes = EmbeddingToBytes(embeddingRight);
-        return await _profileRepo.RegisterAsync(fullName, externalCode, profileType, frontBytes, leftBytes, rightBytes, minioFront, minioLeft, minioRight, createdBy);
+        // V1 Compatibility: Chuyển hướng sang quy trình đăng ký V2
+        var profileId = await RegisterProfileV2Async(fullName, externalCode, profileType, createdBy);
+        
+        await AddEmbeddingAsync(profileId, "front", 0, embeddingFront, minioFront, 1.0f, createdBy);
+        await AddEmbeddingAsync(profileId, "left", -30, embeddingLeft, minioLeft, 1.0f, createdBy);
+        await AddEmbeddingAsync(profileId, "right", 30, embeddingRight, minioRight, 1.0f, createdBy);
+        
+        return profileId;
     }
 
     public async Task<List<FaceRecord>> GetAllFaceRecordsAsync()
     {
-        var faces = await _profileRepo.GetAllFaceEmbeddingsAsync();
-        var records = faces.Select(f => new FaceRecord
+        // V1 Compatibility: Lấy từ V2 và map về cấu trúc 3 góc (lấy 3 bản ghi đầu tiên nếu có)
+        var v2Data = await GetAllFaceEmbeddingsV2Async();
+        var grouped = v2Data.GroupBy(v => v.ProfileId);
+        
+        var records = new List<FaceRecord>();
+        foreach (var group in grouped)
         {
-            ProfileId = f.ProfileId,
-            FullName = f.FullName,
-            EmbeddingFront = BytesToEmbedding(f.EmbeddingFront),
-            EmbeddingLeft = BytesToEmbedding(f.EmbeddingLeft),
-            EmbeddingRight = BytesToEmbedding(f.EmbeddingRight),
-            MinioFront = f.MinioFront,
-            MinioLeft = f.MinioLeft,
-            MinioRight = f.MinioRight
-        }).ToList();
-
-        foreach (var record in records)
-        {
-            record.MinioFront = await ToPresignedUrlOrOriginalAsync(record.MinioFront);
-            record.MinioLeft = await ToPresignedUrlOrOriginalAsync(record.MinioLeft);
-            record.MinioRight = await ToPresignedUrlOrOriginalAsync(record.MinioRight);
+            var pFirst = group.First();
+            var angles = group.ToList();
+            
+            records.Add(new FaceRecord
+            {
+                ProfileId = group.Key,
+                FullName = pFirst.FullName,
+                EmbeddingFront = angles.Count > 0 ? angles[0].Embedding : Array.Empty<float>(),
+                EmbeddingLeft = angles.Count > 1 ? angles[1].Embedding : Array.Empty<float>(),
+                EmbeddingRight = angles.Count > 2 ? angles[2].Embedding : Array.Empty<float>(),
+                MinioFront = angles.Count > 0 ? angles[0].MinioImageUrl ?? "" : "",
+                MinioLeft = angles.Count > 1 ? angles[1].MinioImageUrl ?? "" : "",
+                MinioRight = angles.Count > 2 ? angles[2].MinioImageUrl ?? "" : ""
+            });
         }
 
         return records;

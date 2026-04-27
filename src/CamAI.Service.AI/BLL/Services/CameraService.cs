@@ -320,6 +320,9 @@ public class CameraService : BackgroundService, ICameraService
                                 }
                             }
 
+                            // LƯU FRAME SẠCH (KHÔNG VẼ) ĐỂ HIỂN THỊ WEB
+                            _streamProvider.SetLastRawFrame(MatToBytes(frame));
+
                             // VẼ LÊN FRAME (VẼ MỌI KHUNG HÌNH DỰA TRÊN KẾT QUẢ AI GẦN NHẤT)
                             var currentEnrollReq = _enrollmentService.GetCurrentRequest();
                             for (int i = 0; i < latestDetections.Count; i++)

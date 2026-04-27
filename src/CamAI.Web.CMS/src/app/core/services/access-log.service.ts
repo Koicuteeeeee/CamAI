@@ -33,7 +33,7 @@ export interface FaceApiResponse {
 })
 export class AccessLogService {
   private apiUrl = 'http://localhost:5282/api/AccessLogs';
-  private faceProfileUrl = 'http://localhost:5282/api/FaceProfiles/faces';
+  private faceProfileUrl = 'http://localhost:5282/api/FaceProfiles/faces-v2';
 
   constructor(private http: HttpClient) { }
 

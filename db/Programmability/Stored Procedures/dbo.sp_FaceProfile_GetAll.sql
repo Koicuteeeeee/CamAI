@@ -1,4 +1,5 @@
-CREATE OR ALTER PROCEDURE [dbo].[sp_FaceProfile_GetAll]
+definition                                                                                                                                                                                                                                                      
+CREATE   PROCEDURE [dbo].[sp_FaceProfile_GetAll]
 AS
 BEGIN
     SET NOCOUNT ON;

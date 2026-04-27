@@ -1,16 +1,16 @@
 CREATE TABLE [dbo].[AccessLogs] (
-    [Id] UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    [LogTime] DATETIME NOT NULL DEFAULT GETDATE(),
-    [ProfileId] UNIQUEIDENTIFIER NULL,
-    [FullName] NVARCHAR(100) NULL,
-    [RecognitionStatus] NVARCHAR(20) NULL,
-    [Similarity] FLOAT NULL,
-    [MinioLogImage] NVARCHAR(500) NULL,
-    [DeviceImpacted] NVARCHAR(100) NULL,
-    [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-    [CreatedBy] NVARCHAR(100) NULL,
-    [UpdatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-    [UpdatedBy] NVARCHAR(100) NULL,
-    CONSTRAINT [FK_AccessLogs_FaceProfiles] FOREIGN KEY ([ProfileId]) REFERENCES [dbo].[FaceProfiles]([Id]) ON DELETE SET NULL
+    [Id] uniqueidentifier NOT NULL DEFAULT (newid()),
+[LogTime] datetime NOT NULL DEFAULT (getdate()),
+[ProfileId] uniqueidentifier NULL,
+[MinioLogImage] nvarchar(255) NULL,
+[DeviceImpacted] nvarchar(100) NULL,
+[RecognitionStatus] nvarchar(20) NULL,
+[ConfidenceScore] float NULL,
+[FullName] nvarchar(100) NULL,
+[Similarity] float NULL,
+[CreatedAt] datetime NOT NULL DEFAULT (getdate()),
+[CreatedBy] nvarchar(100) NULL,
+[UpdatedAt] datetime NOT NULL DEFAULT (getdate()),
+[UpdatedBy] nvarchar(100) NULL
 );
 GO

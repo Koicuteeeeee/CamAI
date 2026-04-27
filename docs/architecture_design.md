@@ -29,21 +29,20 @@ Hệ thống hợp nhất toàn bộ tài nguyên hình ảnh vào Bucket `faces
 *   `logs/identified/yyyy/MM/dd/`: Lưu vết người quen.
 *   `logs/alerts/yyyy/MM/dd/`: Lưu vết người lạ/cảnh báo.
 
-### 2.2. Enrollment Workflow (3-Angle Capture)
-Để tăng độ chính xác khi nhận diện từ các góc độ khác nhau:
-1.  **Chế độ Đăng ký (Enrollment Mode)**: Yêu cầu người dùng nhìn thẳng, quay trái và quay phải.
-2.  **Trích xuất**: Hệ thống lấy 3 Vector (Front, Left, Right) và 3 ảnh tương ứng.
-3.  **Lưu trữ**: Đồng bộ cả 3 Vector về SQL Server và 3 ảnh lên MinIO.
-4.  **Nhận diện (Inference)**: AI sẽ so khớp mặt hiện tại với cả 3 góc độ trong DB, lấy kết quả có độ tương đồng (`Similarity`) cao nhất.
+### 2.2. Continuous Enrollment Workflow (V2)
+Hệ thống sử dụng quy trình đăng ký hiện đại không yêu cầu thao tác thủ công:
+1.  **Chế độ Đăng ký (Enrollment Mode)**: Người dùng quay mặt chậm trước camera. AI sẽ tự động tính toán góc xoay (Yaw) dựa trên landmarks.
+2.  **Tự động trích xuất**: AI tự động lưu lại vector và ảnh mỗi khi người dùng đạt đến một góc xoay mới (ví dụ: -45°, -30°, 0°, +15°, +35°).
+3.  **Lưu trữ Đa góc độ**: Hệ thống lưu N bản ghi vào bảng `FaceEmbeddings`, liên kết với cùng một Profile ID.
+4.  **Nhận diện (Inference)**: AI so khớp mặt hiện tại với toàn bộ tập hợp các góc đã lưu của người đó. Kết quả nhận diện là giá trị **MAX Similarity** lớn nhất trong tập hợp.
 
 ---
 
-## 3. Streaming & Visual Debugging
-*   **Luồng Stream:** Cung cấp MJPEG Stream tại `/api/FaceStream/live` phục vụ Debug.
-*   **Logic vẽ khung:**
-    *   **Màu Xanh**: Người đã đăng ký (Kèm tên và độ Similarity).
-    *   **Màu Đỏ**: Người chưa đăng ký hoặc đang trong quá trình đăng ký (`ALREADY REGISTERED` check).
-*   **Tốc độ:** Khóa cứng luồng trả về tại ~33ms (30 FPS) để khớp với tốc độ Video thực tế.
+## 3. Streaming & Dual-View Logic
+Hệ thống cung cấp hai luồng stream song song để phục vụ các mục đích khác nhau:
+*   **Luồng Sạch (`/api/FaceStream/live-clean`)**: Hiển thị trên Dashboard chính. Luồng này không chứa bất kỳ khung vẽ (boxes) hay chữ (labels) nào, mang lại trải nghiệm chuyên nghiệp cho người dùng.
+*   **Luồng Debug (`/api/FaceStream/live`)**: Giữ nguyên toàn bộ các khung bao (rectangles) màu xanh/đỏ, tên và độ tin cậy để phục vụ công tác giám sát kỹ thuật và kiểm thử.
+*   **Tốc độ:** Duy trì ổn định 25-30 FPS cho cả hai luồng.
 
 ---
 

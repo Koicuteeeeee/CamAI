@@ -8,6 +8,7 @@ namespace CamAI.Service.AI.BLL.Services;
 public class StreamProvider : IStreamProvider
 {
     private byte[] _lastFrame = Array.Empty<byte>();
+    private byte[] _lastFrameRaw = Array.Empty<byte>();
 
     public void SetLastFrame(byte[] frameBytes)
     {
@@ -17,5 +18,15 @@ public class StreamProvider : IStreamProvider
     public byte[] GetLastFrame()
     {
         return _lastFrame;
+    }
+
+    public void SetLastRawFrame(byte[] frameBytes)
+    {
+        _lastFrameRaw = frameBytes;
+    }
+
+    public byte[] GetLastRawFrame()
+    {
+        return _lastFrameRaw;
     }
 }

@@ -1,4 +1,5 @@
-CREATE OR ALTER PROCEDURE [dbo].[sp_FaceProfile_Delete]
+definition                                                                                                                                                                                                                                                      
+CREATE   PROCEDURE [dbo].[sp_FaceProfile_Delete]
     @ProfileId UNIQUEIDENTIFIER
 AS
 BEGIN

@@ -58,7 +58,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       name: 'Camera Sảnh chính (FaceID AI)', 
       status: 'online', 
       time: '15:30:01', 
-      url: 'http://localhost:5120/api/FaceStream/live' 
+      url: 'http://localhost:5120/api/FaceStream/live-clean' 
     }
   ];
 
@@ -100,11 +100,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: (res) => {
         if (res && res.logs?.data) {
-          const faceImageMap = new Map<string, string>(
-            (res.faces?.data ?? [])
-              .filter(face => !!face.profileId && !!face.minioFront)
-              .map(face => [face.profileId.toLowerCase(), face.minioFront as string])
-          );
+          // Logic V2: res.faces.data contains multiple rows per profileId.
+          // We take one representative image (preferably "front") for each profile.
+          const faceImageMap = new Map<string, string>();
+          (res.faces?.data ?? []).forEach((face: any) => {
+            const pid = face.profileId?.toLowerCase();
+            if (!pid || !face.minioImageUrl) return;
+            
+            // If we don't have an image for this profile yet, or if this one is "front", update it.
+            if (!faceImageMap.has(pid) || face.angleLabel === 'front') {
+              faceImageMap.set(pid, face.minioImageUrl);
+            }
+          });
 
           const mappedData = res.logs.data.map((log: any) => ({
             id: log.id,

@@ -1,15 +1,3 @@
 definition                                                                                                                                                                                                                                                      
-CREATE   PROCEDURE [dbo].[sp_FaceEmbedding_GetAll]
-AS
-BEGIN
-    SET NOCOUNT ON;
-    SELECT 
-        e.Id,
-        e.ProfileId,
-        p.FullName,
-        e.AngleLabel,
-        e.AngleDegree,
-        e.Embedding,
-        e.MinioImageUrl,
-        e.CaptureQ
+CREATE   PROCEDURE sp_Camera_GetAllActive AS BEGIN SELECT Id, CameraName, StreamUrl, RecognitionThreshold, IsActive FROM Cameras WHERE IsActive = 1; END; IF NOT EXISTS (SELECT * FROM Cameras) BEGIN INSERT INTO Cameras (CameraName, StreamUrl, RecognitionThr
 GO

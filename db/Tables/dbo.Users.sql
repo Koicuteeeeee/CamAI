@@ -1,14 +1,14 @@
 CREATE TABLE [dbo].[Users] (
-    [Id] UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    [KeycloakId] UNIQUEIDENTIFIER NULL UNIQUE,
-    [Username] NVARCHAR(50) NOT NULL UNIQUE,
-    [Email] NVARCHAR(100) NULL,
-    [FullName] NVARCHAR(100) NULL,
-    [Role] NVARCHAR(20) DEFAULT 'Staff',
-    [IsActive] BIT DEFAULT 1,
-    [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-    [CreatedBy] NVARCHAR(100) NULL,
-    [UpdatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-    [UpdatedBy] NVARCHAR(100) NULL
+    [Id] uniqueidentifier NOT NULL DEFAULT (newid()),
+[KeycloakId] uniqueidentifier NULL,
+[Username] nvarchar(50) NOT NULL,
+[Email] nvarchar(100) NULL,
+[FullName] nvarchar(100) NULL,
+[Role] nvarchar(20) NULL DEFAULT ('Staff'),
+[IsActive] bit NULL DEFAULT ((1)),
+[CreatedAt] datetime NOT NULL DEFAULT (getdate()),
+[CreatedBy] nvarchar(100) NULL,
+[UpdatedAt] datetime NOT NULL DEFAULT (getdate()),
+[UpdatedBy] nvarchar(100) NULL
 );
 GO
