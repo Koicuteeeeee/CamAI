@@ -10,7 +10,7 @@ function initializeKeycloak(keycloak: KeycloakService) {
   return () =>
     keycloak.init({
       config: {
-        url: 'http://localhost:8081',
+        url: 'http://192.168.1.144:8081',
         realm: 'CamAI',
         clientId: 'camai-web'
       },

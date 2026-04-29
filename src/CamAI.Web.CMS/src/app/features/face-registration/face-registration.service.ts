@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class FaceRegistrationService {
-  private apiUrl = 'http://localhost:5120/api/face/register-multi';
+  private apiUrl = 'http://192.168.1.144:5120/api/face/register-multi';
 
   constructor(private http: HttpClient) {}
 
@@ -21,10 +21,10 @@ export class FaceRegistrationService {
   }
 
   startEnroll(fullName: string): Observable<any> {
-    return this.http.post('http://localhost:5120/api/face/enroll/start', { fullName });
+    return this.http.post('http://192.168.1.144:5120/api/face/enroll/start', { fullName });
   }
 
   getEnrollStatus(): Observable<any> {
-    return this.http.get('http://localhost:5120/api/face/enroll/status');
+    return this.http.get('http://192.168.1.144:5120/api/face/enroll/status');
   }
 }

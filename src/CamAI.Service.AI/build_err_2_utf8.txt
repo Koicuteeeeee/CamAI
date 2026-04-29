@@ -1,7 +1,0 @@
-﻿C:\Users\Az09.Team\Git-projects\CamAI\src\CamAI.Service.AI\BLL\Services\ApiFaceMatchServiceV2.cs(181,27): error CS1061: 'CapturedAngle' does not contain a definition for 'CaptureQuality' and no accessible extension method 'CaptureQuality' accepting a first argument of type 'CapturedAngle' could be found (are you missing a using directive or an assembly reference?) [C:\Users\Az09.Team\Git-projects\CamAI\src\CamAI.Service.AI\CamAI.Service.AI.csproj]
-
-Build FAILED.
-    32 Warning(s)
-    1 Error(s)
-
-Time Elapsed 00:00:02.44

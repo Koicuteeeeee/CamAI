@@ -37,8 +37,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   userName = signal<string>('Guest');
   userEmail = signal<string>('');
-  private readonly minioBaseUrl = 'http://localhost:9000';
-  private readonly accessLogStreamUrl = 'http://localhost:5282/api/AccessLogs/stream';
+  private readonly minioBaseUrl = 'http://192.168.1.144:9000';
+  private readonly accessLogStreamUrl = 'http://192.168.1.144:5282/api/AccessLogs/stream';
   private accessLogStream: EventSource | null = null;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   streamConnected = signal(false);
@@ -58,7 +58,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       name: 'Camera Sảnh chính (FaceID AI)', 
       status: 'online', 
       time: '15:30:01', 
-      url: 'http://localhost:5120/api/FaceStream/live-clean' 
+      url: 'http://192.168.1.144:5120/api/FaceStream/live-clean' 
     }
   ];
 

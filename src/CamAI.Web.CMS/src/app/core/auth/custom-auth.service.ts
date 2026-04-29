@@ -8,7 +8,7 @@ import { catchError, tap, throwError } from 'rxjs';
   providedIn: 'root'
 })
 export class CustomAuthService {
-  private readonly keycloakUrl = 'http://localhost:8081';
+  private readonly keycloakUrl = 'http://192.168.1.144:8081';
   private readonly realm = 'CamAI';
   private readonly clientId = 'camai-web';
 

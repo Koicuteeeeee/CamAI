@@ -1,7 +1,0 @@
-﻿C:\Users\Az09.Team\Git-projects\CamAI\src\CamAI.Service.AI\BLL\Services\ApiFaceMatchService.cs(12,36): error CS0535: 'ApiFaceMatchService' does not implement interface member 'IFaceMatchService.RegisterProfileV2Async(EnrollmentRequestV2)' [C:\Users\Az09.Team\Git-projects\CamAI\src\CamAI.Service.AI\CamAI.Service.AI.csproj]
-
-Build FAILED.
-    29 Warning(s)
-    1 Error(s)
-
-Time Elapsed 00:00:01.46

@@ -1,0 +1,71 @@
+
+Windows IP Configuration
+
+
+Ethernet adapter Ethernet:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+
+Unknown adapter Tailscale:
+
+   Connection-specific DNS Suffix  . : tail14491c.ts.net
+   IPv6 Address. . . . . . . . . . . : fd7a:115c:a1e0::1f01:e5ba
+   Link-local IPv6 Address . . . . . : fe80::1598:ba3f:f6e1:45a0%56
+   IPv4 Address. . . . . . . . . . . : 100.114.229.109
+   Subnet Mask . . . . . . . . . . . : 255.255.255.255
+   Default Gateway . . . . . . . . . : 
+
+Ethernet adapter Ethernet 3:
+
+   Connection-specific DNS Suffix  . : 
+   Link-local IPv6 Address . . . . . : fe80::7701:1831:eea5:c0f1%23
+   Autoconfiguration IPv4 Address. . : 169.254.20.65
+   Subnet Mask . . . . . . . . . . . : 255.255.0.0
+   Default Gateway . . . . . . . . . : 
+
+Ethernet adapter Ethernet 4:
+
+   Connection-specific DNS Suffix  . : 
+   Link-local IPv6 Address . . . . . : fe80::2a40:7c0:e8c:f%22
+   IPv4 Address. . . . . . . . . . . : 192.168.117.1
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 
+
+Wireless LAN adapter Local Area Connection* 9:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+
+Wireless LAN adapter Local Area Connection* 10:
+
+   Media State . . . . . . . . . . . : Media disconnected
+   Connection-specific DNS Suffix  . : 
+
+Wireless LAN adapter Wi-Fi:
+
+   Connection-specific DNS Suffix  . : 
+   IPv6 Address. . . . . . . . . . . : 2405:4802:21a1:14d0:7cd7:e530:329f:bf4b
+   IPv6 Address. . . . . . . . . . . : 2405:4802:21a1:14d0:ffff:ffff:ffff:fffc
+   Temporary IPv6 Address. . . . . . : 2405:4802:21a1:14d0:6c67:ad2a:864c:50c6
+   Link-local IPv6 Address . . . . . : fe80::c7dc:633e:328a:8f8d%10
+   IPv4 Address. . . . . . . . . . . : 192.168.1.144
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : fe80::1%10
+                                       192.168.1.1
+
+Ethernet adapter vEthernet (Default Switch):
+
+   Connection-specific DNS Suffix  . : 
+   Link-local IPv6 Address . . . . . : fe80::25dd:68a:ebfc:d463%28
+   IPv4 Address. . . . . . . . . . . : 172.24.96.1
+   Subnet Mask . . . . . . . . . . . : 255.255.240.0
+   Default Gateway . . . . . . . . . : 
+
+Ethernet adapter vEthernet (WSL (Hyper-V firewall)):
+
+   Connection-specific DNS Suffix  . : 
+   Link-local IPv6 Address . . . . . : fe80::d888:11d9:3860:16c2%78
+   IPv4 Address. . . . . . . . . . . : 172.24.32.1
+   Subnet Mask . . . . . . . . . . . : 255.255.240.0
+   Default Gateway . . . . . . . . . : 

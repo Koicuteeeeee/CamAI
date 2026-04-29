@@ -32,8 +32,8 @@ export interface FaceApiResponse {
   providedIn: 'root'
 })
 export class AccessLogService {
-  private apiUrl = 'http://localhost:5282/api/AccessLogs';
-  private faceProfileUrl = 'http://localhost:5282/api/FaceProfiles/faces-v2';
+  private apiUrl = 'http://192.168.1.144:5282/api/AccessLogs';
+  private faceProfileUrl = 'http://192.168.1.144:5282/api/FaceProfiles/faces-v2';
 
   constructor(private http: HttpClient) { }
 
